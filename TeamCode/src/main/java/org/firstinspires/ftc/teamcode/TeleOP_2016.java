@@ -8,7 +8,7 @@ package org.firstinspires.ftc.teamcode;
         import com.qualcomm.robotcore.util.ElapsedTime;
 
         import org.firstinspires.ftc.robotcore.external.Telemetry;
-        import org.firstinspires.ftc.robotcore.internal.AppUtil;
+
 
 /**
  * Created by Drew on 10/16/2016.
