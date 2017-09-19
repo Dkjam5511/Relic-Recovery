@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import android.view.VelocityTracker;
 
-import com.qualcomm.ftccommon.DbgLog;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -17,6 +16,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
 /**
  * Created by Drew on 9/17/2017.
+ * :D
  */
 
 public abstract class Navigation_Routines extends LinearOpMode {
