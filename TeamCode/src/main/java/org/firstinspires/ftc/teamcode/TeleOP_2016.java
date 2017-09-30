@@ -14,7 +14,7 @@ package org.firstinspires.ftc.teamcode;
  * Created by Drew on 10/16/2016.
  * :P
  */
-@TeleOp(name="TeleOp", group="Drive")
+@TeleOp(name="TeleOp 2016", group="Drive")
 public class TeleOP_2016 extends OpMode {
 
     DcMotor leftWheel;
