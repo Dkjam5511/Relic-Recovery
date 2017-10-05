@@ -1,18 +1,24 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.view.VelocityTracker;
-
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
 /**
  * Created by Drew on 9/17/2017.
@@ -26,13 +32,16 @@ public abstract class Navigation_Routines extends LinearOpMode {
     BNO055IMU imu;
     Orientation angles;
     Velocity speeds;
+    VuforiaLocalizer vuforia;
+
+    public String picturereading = null;
 
     private double wheel_encoder_ticks = 288;
     private double wheel_diameter = 3.53;  // size of wheels
     public double ticks_per_inch = wheel_encoder_ticks / (wheel_diameter * 3.1416);
 
 
-    public void NAV_init(){
+    public void NAV_init() {
         leftWheel = hardwareMap.dcMotor.get("left");
         rightWheel = hardwareMap.dcMotor.get("right");
 
@@ -113,7 +122,7 @@ public abstract class Navigation_Routines extends LinearOpMode {
         double new_speed;
 
         speeds = imu.getVelocity();
-       new_speed = speeds.xVeloc;
+        new_speed = speeds.xVeloc;
 
         return new_speed;
     }
@@ -194,7 +203,6 @@ public abstract class Navigation_Routines extends LinearOpMode {
         log_timer.reset();
 
 
-
         while (opModeIsActive() && !destination_reached) {
 
             telemetry.addData("go_forward ticks_to_travel", ticks_to_travel);
@@ -250,7 +258,6 @@ public abstract class Navigation_Routines extends LinearOpMode {
         //telemetry.update();
 
 
-
         sleep(100);
         DbgLog.msg("10435 ending go_forward: opModeIsActive:" + Boolean.toString(opModeIsActive())
                 + " distance traveled L:" + Double.toString((leftWheel.getCurrentPosition() - start_position_L) / ticks_per_inch)
@@ -258,4 +265,42 @@ public abstract class Navigation_Routines extends LinearOpMode {
                 + " destination_reached:" + Boolean.toString(destination_reached));
 
     } // end of go_forward
+
+    String vuforia_scan() {
+
+        ElapsedTime vuforiascantime = new ElapsedTime();
+
+        boolean picturefound = false;
+
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+
+        parameters.vuforiaLicenseKey = "AWaEPBn/////AAAAGWa1VK57tkUipP01PNk9ghlRuxjK1Oh1pmbHuRnpaJI0vi57dpbnIkpee7J1pQ2RIivfEFrobqblxS3dKUjRo52NMJab6Me2Yhz7ejs5SDn4G5dheW5enRNWmRBsL1n+9ica/nVjG8xvGc1bOBRsIeZyL3EZ2tKSJ407BRgMwNOmaLPBle1jxqAE+eLSoYsz/FuC1GD8c4S3luDm9Utsy/dM1W4dw0hDJFc+lve9tBKGBX0ggj6lpo9GUrTC8t19YJg58jsIXO/DiF09a5jlrTeB2LK+GndUDEGyZA1mS3yAR6aIBeDYnFw+79mVFIkTPk8wv3HIQfzoggCu0AwWJBVUVjkDxJOWfzCGjaHylZlo";
+
+        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
+        this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
+
+        VuforiaTrackables relicTrackables = this.vuforia.loadTrackablesFromAsset("RelicVuMark");
+        VuforiaTrackable relicTemplate = relicTrackables.get(0);
+
+        relicTrackables.activate();
+
+        vuforiascantime.reset();
+        while (opModeIsActive() && !picturefound && vuforiascantime.seconds() < 5) {
+            RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
+            if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
+                telemetry.addData("VuMark", "%s visible", vuMark);
+                picturereading = vuMark.toString();
+                picturefound = true;
+            } else {
+                telemetry.addData("VuMark", "not visible");
+                picturefound = false;
+            }
+            telemetry.update();
+        }
+            return picturereading;
+    }
+
 }
+
+
