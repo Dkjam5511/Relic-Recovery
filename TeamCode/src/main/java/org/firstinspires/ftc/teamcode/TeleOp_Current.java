@@ -36,14 +36,13 @@ public class TeleOp_Current extends OpMode {
     double liftencoderstartpos;
     double liftencoderpos;
     double liftheight;
-    // I'm writing this in inches as a place holder for now
     double liftclearance = 1;
     double blockheight = 6;
     double liftpos;
     double ticksperrev = 560;
     double inchesperrev = 5.375;
     double ticksperinch = ticksperrev / inchesperrev;;
-    int liftlevel;
+    int liftlevel = 0;
     boolean slowmode = false;
     boolean joystick_driving = true;
 
@@ -67,8 +66,6 @@ public class TeleOp_Current extends OpMode {
         liftmotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         liftencoderstartpos = liftmotor.getCurrentPosition();
-
-        liftlevel = 0;
     }
 
     @Override
@@ -81,28 +78,25 @@ public class TeleOp_Current extends OpMode {
     public void loop() {
         liftencoderpos = liftmotor.getCurrentPosition();
 
-        if (liftlevel < 0){
-            liftlevel = 0;
-        } else if (liftlevel > 4){
-            liftlevel = 4;
-        }
-
-        if (gamepad1.right_trigger == 1 && righttriggertimer.seconds() > 0.5){
+        if (gamepad1.right_trigger == 1 && righttriggertimer.seconds() > 0.5 && liftlevel < 4){
             righttriggertimer.reset();
             liftlevel += 1;
         }
-        if (gamepad1.left_trigger == 1 && lefttriggertimer.seconds() > 0.5){
+        if (gamepad1.left_trigger == 1 && lefttriggertimer.seconds() > 0.5 && liftlevel > 0) {
             lefttriggertimer.reset();
             liftlevel -= 1;
         }
-        liftheight = liftclearance + (liftlevel * blockheight);
-
+        if (liftlevel == 0){
+            liftheight = 0;
+        } else {
+            liftheight = liftclearance + (liftlevel * blockheight);
+        }
         liftpos = liftheight*ticksperinch;
 
-        if(liftpos < liftmotor.getCurrentPosition()) {
+        if(liftpos != liftmotor.getCurrentPosition()) {
             liftmotor.setTargetPosition((int) (liftpos));
             liftmotor.setPower(1);
-        } 
+        }
 
         if (gamepad1.right_bumper) {
             slowmode = true;
