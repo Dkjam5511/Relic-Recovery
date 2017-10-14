@@ -21,10 +21,10 @@ public class TeleOp_Current extends OpMode {
     double rightwheelpower;
     double speedmodifier;
     double liftpower;
-    double leftgrabberclosed = .55;
-    double rightgrabberclosed = .45;
-    double leftgrabberopen = .4;
-    double rightgrabberopen = .6;
+    double leftgrabberclosed = .65;
+    double rightgrabberclosed = .35;
+    double leftgrabberopen = .5;
+    double rightgrabberopen = .5;
     double leftgrabberinit = .9;
     double rightgrabberinit = .1;
     double RightStick_x;
@@ -33,6 +33,8 @@ public class TeleOp_Current extends OpMode {
     double ReductionFactor;
     double dpad_speed = .16;
     double dpad_turn_speed = .22;
+    double liftencoderstartpos;
+    double liftencoderpos;
     boolean slowmode = false;
     boolean joystick_driving = true;
 
@@ -49,6 +51,10 @@ public class TeleOp_Current extends OpMode {
         rightgrabber.setPosition(rightgrabberinit);
 
         liftmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        liftmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        liftencoderstartpos = liftmotor.getCurrentPosition();
     }
 
     @Override
@@ -59,6 +65,7 @@ public class TeleOp_Current extends OpMode {
 
     @Override
     public void loop() {
+        liftencoderpos = liftmotor.getCurrentPosition();
 
         if (gamepad1.right_bumper) {
             slowmode = true;
@@ -74,8 +81,12 @@ public class TeleOp_Current extends OpMode {
             speedmodifier = 1;
         }
 
-        liftpower = gamepad2.left_stick_y;
-        liftmotor.setPower(liftpower * .8);
+        if (liftencoderpos <= liftencoderstartpos){
+            liftmotor.setPower(0);
+        } else {
+            liftpower = gamepad2.left_stick_y;
+            liftmotor.setPower(liftpower * .8);
+        }
 
         if (gamepad2.right_bumper) {
             leftgrabber.setPosition(leftgrabberclosed);
@@ -90,16 +101,16 @@ public class TeleOp_Current extends OpMode {
             rightgrabber.setPosition(rightgrabberinit);
         }
 
-        if(gamepad1.dpad_up){
+        if (gamepad1.dpad_up) {
             leftwheelpower = -dpad_speed;
             rightwheelpower = -dpad_speed;
-        } else if (gamepad1.dpad_down){
+        } else if (gamepad1.dpad_down) {
             leftwheelpower = dpad_speed;
             rightwheelpower = dpad_speed;
-        } else if (gamepad1.dpad_left){
+        } else if (gamepad1.dpad_left) {
             leftwheelpower = dpad_turn_speed;
             rightwheelpower = -dpad_turn_speed;
-        } else if (gamepad1.dpad_right){
+        } else if (gamepad1.dpad_right) {
             leftwheelpower = -dpad_turn_speed;
             rightwheelpower = dpad_turn_speed;
         }
@@ -137,7 +148,6 @@ public class TeleOp_Current extends OpMode {
 
         leftwheel.setPower(leftwheelpower);
         rightwheel.setPower(-rightwheelpower);
-
     }
 
     @Override

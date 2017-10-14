@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.OldCode;
 
+        import com.qualcomm.robotcore.eventloop.opmode.Disabled;
         import com.qualcomm.robotcore.eventloop.opmode.OpMode;
         import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
         import com.qualcomm.robotcore.hardware.DcMotor;
@@ -14,7 +15,7 @@ package org.firstinspires.ftc.teamcode.OldCode;
  * Created by Drew on 10/16/2016.
  * :P
  */
-@TeleOp(name="TeleOp 2016", group="Drive")
+@Disabled
 public class TeleOP_2016 extends OpMode {
 
     DcMotor leftWheel;

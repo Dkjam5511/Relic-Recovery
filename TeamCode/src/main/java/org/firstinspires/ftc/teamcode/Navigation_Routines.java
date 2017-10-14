@@ -103,10 +103,6 @@ public abstract class Navigation_Routines extends LinearOpMode {
                 go_right = !go_right;
                 degrees_to_turn = 360 - degrees_to_turn;
             }
-            //telemetry.addData("Wheel Power", wheel_power);
-            //telemetry.addData("Degrees to Turn", degrees_to_turn);
-            //telemetry.addData("Current Heading", current_heading);
-            //telemetry.update();
 
         }
 
@@ -126,7 +122,6 @@ public abstract class Navigation_Routines extends LinearOpMode {
 
         return new_speed;
     }
-
 
     private double go_straight_adjustment(double target_heading) {
 
@@ -164,7 +159,6 @@ public abstract class Navigation_Routines extends LinearOpMode {
         return gs_adjustment;
 
     } // end of go_straight_adjustment
-
 
     void go_forward(double inches_to_travel, int heading, double speed) {
 
