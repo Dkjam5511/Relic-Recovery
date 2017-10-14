@@ -35,9 +35,21 @@ public class TeleOp_Current extends OpMode {
     double dpad_turn_speed = .22;
     double liftencoderstartpos;
     double liftencoderpos;
+    double liftheight;
+    // I'm writing this in inches as a place holder for now
+    double liftclearance = 1;
+    double blockheight = 6;
+    double liftpos;
+    double ticksperrev = 560;
+    double inchesperrev = 5.375;
+    double ticksperinch = ticksperrev / inchesperrev;;
+    int liftlevel;
     boolean slowmode = false;
     boolean joystick_driving = true;
 
+
+    ElapsedTime righttriggertimer = new ElapsedTime();
+    ElapsedTime lefttriggertimer = new ElapsedTime();
 
     @Override
     public void init() {
@@ -52,9 +64,11 @@ public class TeleOp_Current extends OpMode {
 
         liftmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        liftmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        liftmotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         liftencoderstartpos = liftmotor.getCurrentPosition();
+
+        liftlevel = 0;
     }
 
     @Override
@@ -66,6 +80,29 @@ public class TeleOp_Current extends OpMode {
     @Override
     public void loop() {
         liftencoderpos = liftmotor.getCurrentPosition();
+
+        if (liftlevel < 0){
+            liftlevel = 0;
+        } else if (liftlevel > 4){
+            liftlevel = 4;
+        }
+
+        if (gamepad1.right_trigger == 1 && righttriggertimer.seconds() > 0.5){
+            righttriggertimer.reset();
+            liftlevel += 1;
+        }
+        if (gamepad1.left_trigger == 1 && lefttriggertimer.seconds() > 0.5){
+            lefttriggertimer.reset();
+            liftlevel -= 1;
+        }
+        liftheight = liftclearance + (liftlevel * blockheight);
+
+        liftpos = liftheight*ticksperinch;
+
+        if(liftpos < liftmotor.getCurrentPosition()) {
+            liftmotor.setTargetPosition((int) (liftpos));
+            liftmotor.setPower(1);
+        } 
 
         if (gamepad1.right_bumper) {
             slowmode = true;
