@@ -2,8 +2,11 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -29,6 +32,9 @@ public abstract class Navigation_Routines extends LinearOpMode {
 
     DcMotor leftWheel;
     DcMotor rightWheel;
+    Servo jewelservo;
+    ColorSensor jewelcs;
+    ColorSensor ODS;
     BNO055IMU imu;
     Orientation angles;
     Velocity speeds;
@@ -36,17 +42,27 @@ public abstract class Navigation_Routines extends LinearOpMode {
 
     public String picturereading = null;
 
-    private double wheel_encoder_ticks = 288;
-    private double wheel_diameter = 3.53;  // size of wheels
+    private double wheel_encoder_ticks = 1478.4;
+    private double wheel_diameter = 3.625;  // size of wheels
     public double ticks_per_inch = wheel_encoder_ticks / (wheel_diameter * 3.1416);
 
 
     public void NAV_init() {
         leftWheel = hardwareMap.dcMotor.get("left");
         rightWheel = hardwareMap.dcMotor.get("right");
+        jewelcs = hardwareMap.colorSensor.get("jcs");
+        ODS = hardwareMap.colorSensor.get("ods");
+        jewelservo = hardwareMap.servo.get("js");
 
-        rightWheel.setDirection(DcMotorSimple.Direction.REVERSE);
-        leftWheel.setDirection(DcMotorSimple.Direction.FORWARD);
+        jewelcs.enableLed(false);
+
+        jewelservo.setPosition(0);
+
+        rightWheel.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftWheel.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        leftWheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightWheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         BNO055IMU.Parameters IMUParameters = new BNO055IMU.Parameters();
         IMUParameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
@@ -64,15 +80,14 @@ public abstract class Navigation_Routines extends LinearOpMode {
         }
     }
 
-    void turn_to_heading(double target_heading) {
+    public void turn_to_heading(double target_heading) {
         boolean go_right;
-        double current_heading;
+        double current_heading = currentheadingreading();;
         double degrees_to_turn;
         double wheel_power;
 
-        DbgLog.msg("10435 starting turn_to_heading");
-        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        current_heading = angles.firstAngle;
+        DbgLog.msg("10435 starting TURN_TO_HEADING");
+        current_heading = currentheadingreading();
         degrees_to_turn = Math.abs(target_heading - current_heading);
 
         go_right = target_heading > current_heading;
@@ -92,9 +107,8 @@ public abstract class Navigation_Routines extends LinearOpMode {
             rightWheel.setPower(wheel_power);
             leftWheel.setPower(-wheel_power);
 
-            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            current_heading = currentheadingreading();
 
-            current_heading = angles.firstAngle;                               // get the new current reading
             degrees_to_turn = Math.abs(target_heading - current_heading);       // Calculate how far is remaining to turn
 
             go_right = target_heading > current_heading;
@@ -104,13 +118,14 @@ public abstract class Navigation_Routines extends LinearOpMode {
                 degrees_to_turn = 360 - degrees_to_turn;
             }
 
+            DbgLog.msg("TURN_TO_HEADING" + " go right: " + go_right + " degrees to turn: " + degrees_to_turn + " wheel power: " + wheel_power + " current heading: " + current_heading);
         }
 
         leftWheel.setPower(0);
         rightWheel.setPower(0);
         sleep(300);
 
-        DbgLog.msg("10435 ending turn_to_heading " + Double.toString(target_heading) + "  Attempted heading:" + Double.toString(current_heading) + "  Real current Heading:" + Double.toString(angles.firstAngle));
+        DbgLog.msg("10435 ending TURN_TO_HEADING" + Double.toString(target_heading) + "  Final heading:" + Double.toString(current_heading) + "  After set power 0:" + Double.toString(angles.firstAngle));
 
     } // end of turn_to_heading
 
@@ -123,21 +138,33 @@ public abstract class Navigation_Routines extends LinearOpMode {
         return new_speed;
     }
 
+    private double currentheadingreading(){
+        double current_heading;
+        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        current_heading = angles.firstAngle;
+
+        if (current_heading < 0){
+            current_heading = -current_heading;
+        } else {
+            current_heading = 360 - current_heading;
+        }
+
+        return current_heading;
+    }
+
     private double go_straight_adjustment(double target_heading) {
 
         //  This function outputs power_adjustment that should be added to right wheel and subtracted from left wheel
 
         double gs_adjustment;
-        double current_heading;
+        double current_heading = currentheadingreading();;
         double degrees_off;
         boolean go_right;
 
-
-        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-
         DbgLog.msg("10435 starting go_straight_adjustment heading:" + Double.toString(target_heading) + " current heading:" + Double.toString(angles.firstAngle));
 
-        current_heading = angles.firstAngle;
+        current_heading = currentheadingreading();
+
         go_right = target_heading > current_heading;
         degrees_off = Math.abs(target_heading - current_heading);
 
@@ -156,20 +183,27 @@ public abstract class Navigation_Routines extends LinearOpMode {
             gs_adjustment = -gs_adjustment;
         }
 
+        DbgLog.msg("10435 go_straight_adjustment adjustment:" + Double.toString(gs_adjustment));
+
         return gs_adjustment;
 
     } // end of go_straight_adjustment
 
-    void go_forward(double inches_to_travel, int heading, double speed) {
+    public void go_forward(double inches_to_travel, int heading, double speed, boolean checking_line, String BoR) {
 
-        DbgLog.msg("10435 starting go_forward inches:" + Double.toString(inches_to_travel) + " heading:" + Integer.toString(heading) + " speed:" + Double.toString(speed) + " find white:");
+        DbgLog.msg("10435 starting GO_FORWARD inches:" + Double.toString(inches_to_travel) + " heading:" + Integer.toString(heading) + " speed:" + Double.toString(speed));
 
         ElapsedTime log_timer = new ElapsedTime();
+        ElapsedTime safe_zone_timer = new ElapsedTime();
 
         double current_speed = .05;
         int ticks_to_travel;
         boolean destination_reached = false;
         boolean going_backwards = false;
+        boolean safe_zone_found = false;
+        boolean first_safe_zone_hit = false;
+        boolean second_safe_zone_hit = false;
+        boolean current_speed_override = false;
         double speed_increase = .05;
         double actual_speed;
         int start_position_L;
@@ -178,9 +212,16 @@ public abstract class Navigation_Routines extends LinearOpMode {
         int ticks_traveled_L;
         int ticks_traveled_R;
         int lowest_ticks_traveled;
+        int first_safe_zone_ticks = 0;
+        int second_safe_zone_ticks = 0;
+        int middle_safe_zone;
         double remaining_inches;
         double previous_log_timer = 0;
         double power_adjustment;
+        double color_sensor_reading = 0;
+        double current_target_value = 0;
+        double redtargetvalue = 0;
+        double bluetargetvalue = 0;
 
         if (speed < 0) {
             inches_to_travel = inches_to_travel * 1.08;
@@ -196,14 +237,13 @@ public abstract class Navigation_Routines extends LinearOpMode {
 
         log_timer.reset();
 
+        while (opModeIsActive() && !destination_reached && !safe_zone_found) {
 
-        while (opModeIsActive() && !destination_reached) {
-
-            telemetry.addData("go_forward ticks_to_travel", ticks_to_travel);
+            telemetry.addData("GO_FORWARD ticks_to_travel", ticks_to_travel);
             telemetry.update();
 
             current_speed = current_speed + speed_increase;  // this is to slowly ramp up the speed so we don't slip
-            if (Math.abs(current_speed) > Math.abs(speed)) {
+            if (Math.abs(current_speed) > Math.abs(speed) && !current_speed_override){
                 current_speed = speed;
             }
 
@@ -219,11 +259,41 @@ public abstract class Navigation_Routines extends LinearOpMode {
                 lowest_ticks_traveled = ticks_traveled_R;
             }
 
+            if (BoR == "red"){
+                current_target_value = redtargetvalue;
+                color_sensor_reading = ODS.red();
+            } else if (BoR == "blue"){
+                current_target_value = bluetargetvalue;
+                color_sensor_reading = ODS.blue();
+            } else if (BoR == "null"){
+                current_target_value = 0;
+                color_sensor_reading = 0;
+            }
+
+            if (checking_line && color_sensor_reading > current_target_value && !first_safe_zone_hit){
+                first_safe_zone_ticks = lowest_ticks_traveled;
+                first_safe_zone_hit = true;
+                safe_zone_timer.reset();
+            } else if (color_sensor_reading > current_target_value && first_safe_zone_hit && safe_zone_timer.seconds() > .5){
+                rightWheel.setPower(0);
+                leftWheel.setPower(0);
+                second_safe_zone_ticks = lowest_ticks_traveled;
+                current_speed_override = true;
+                second_safe_zone_hit = true;
+            } else if (checking_line && second_safe_zone_hit){
+                middle_safe_zone = (second_safe_zone_ticks - first_safe_zone_ticks) / 2;
+                current_speed = -speed;
+                safe_zone_found = lowest_ticks_traveled <= middle_safe_zone;
+            }
+
             actual_speed = getSpeed();
 
+            telemetry.addData("actual speed:", actual_speed);
+            telemetry.update();
+
             if (ticks_traveled_L != previous_ticks_traveled_L && log_timer.seconds() - previous_log_timer > .1) {
-                DbgLog.msg("10435 go_forward ticks_traveled: L:" + Double.toString(ticks_traveled_L)
-                        + " R:" + Double.toString(ticks_traveled_R) + " actual_speed:" + Double.toString(actual_speed));
+                DbgLog.msg("10435 GO_FORWARD ticks_traveled: L:" + Double.toString(ticks_traveled_L)
+                        + " R:" + Double.toString(ticks_traveled_R) + " actual_speed:" + actual_speed);
                 previous_log_timer = log_timer.seconds();
                 previous_ticks_traveled_L = ticks_traveled_L;
             }
@@ -237,12 +307,10 @@ public abstract class Navigation_Routines extends LinearOpMode {
                 if (going_backwards) {
                     speed = -speed;
                 }
-                DbgLog.msg("10435 go_forward slowing down: remaining_inches:" + Double.toString(remaining_inches)
+                DbgLog.msg("10435 GO_FORWARD slowing down: remaining_inches:" + Double.toString(remaining_inches)
                         + " lowest_ticks_traveled:" + Integer.toString(lowest_ticks_traveled));
             }
-
         }
-
         rightWheel.setPower(0);
         leftWheel.setPower(0);
 
@@ -253,14 +321,14 @@ public abstract class Navigation_Routines extends LinearOpMode {
 
 
         sleep(100);
-        DbgLog.msg("10435 ending go_forward: opModeIsActive:" + Boolean.toString(opModeIsActive())
+        DbgLog.msg("10435 ending GO_FORWARD: opModeIsActive:" + Boolean.toString(opModeIsActive())
                 + " distance traveled L:" + Double.toString((leftWheel.getCurrentPosition() - start_position_L) / ticks_per_inch)
                 + " distance traveled R:" + Double.toString((rightWheel.getCurrentPosition() - start_position_R) / ticks_per_inch)
                 + " destination_reached:" + Boolean.toString(destination_reached));
 
     } // end of go_forward
 
-    String vuforia_scan() {
+    public String vuforia_scan() {
 
         ElapsedTime vuforiascantime = new ElapsedTime();
 
@@ -292,9 +360,41 @@ public abstract class Navigation_Routines extends LinearOpMode {
             }
             telemetry.update();
         }
-            return picturereading;
+        return picturereading;
     }
 
+    public void jewelknock(String RoB) {
+        double redtargetvalue = 0;
+        double bluetargetvalue = 0;
+        boolean wentforward = true;
+
+        ElapsedTime jewelservotimer = new ElapsedTime();
+
+        jewelservo.setPosition(90);
+        sleep(1000);
+
+        jewelservotimer.reset();
+
+        // wait up to 10 seconds for servo arm to go down and to get a color reading
+        while (opModeIsActive() && (jewelservotimer.seconds() < 10) && (jewelcs.red() < redtargetvalue) && (jewelcs.blue() < bluetargetvalue)) {
+            sleep(10);
+        }
+
+        if ((RoB == "red" && jewelcs.red() >= redtargetvalue) || (RoB == "blue" && jewelcs.blue() >= bluetargetvalue)) {
+            go_forward(6, 0, .7, false, "null");
+            wentforward = true;
+        } else {
+            go_forward(6, 0, -.7, false, "null");
+            wentforward = false;
+        }
+
+        jewelservo.setPosition(0);
+
+        if (!wentforward) {
+            go_forward(12, 0, .7, false, "null");
+
+        }
+    }
 }
 
 
