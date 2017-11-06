@@ -51,7 +51,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import java.util.Locale;
 
 
-@Autonomous(name = "REV Gyro Test", group = "Test")
+@Autonomous(name = "REV Gyro Test", group = "Tests")
 public class REV_Gyro_Test extends LinearOpMode
 {
     //----------------------------------------------------------------------------------------------
