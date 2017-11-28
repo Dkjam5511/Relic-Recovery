@@ -35,8 +35,8 @@ public abstract class Navigation_Routines extends LinearOpMode {
     DcMotor liftmotor;
     DcMotor relicmotor;
     Servo jewelservo;
-    public Servo leftgrabber;
-    public Servo rightgrabber;
+    public Servo leftclamp;
+    public Servo rightclamp;
     ColorSensor jewelcs;
     BNO055IMU imu;
     Orientation angles;
@@ -50,14 +50,15 @@ public abstract class Navigation_Routines extends LinearOpMode {
     private double liftencoderstartpos;
     public double ticks_per_inch = wheel_encoder_ticks / (wheel_diameter * 3.1416);
 
+    public ElapsedTime runtime = new ElapsedTime();
 
     public void NAV_init() {
         leftWheel = hardwareMap.dcMotor.get("left");
         rightWheel = hardwareMap.dcMotor.get("right");
         jewelcs = hardwareMap.colorSensor.get("jcs");
         jewelservo = hardwareMap.servo.get("js");
-        leftgrabber = hardwareMap.servo.get("lg");
-        rightgrabber = hardwareMap.servo.get("rg");
+        leftclamp = hardwareMap.servo.get("lc");
+        rightclamp = hardwareMap.servo.get("rc");
         liftmotor = hardwareMap.dcMotor.get("lm");
         relicmotor = hardwareMap.dcMotor.get("rm");
 
@@ -65,8 +66,8 @@ public abstract class Navigation_Routines extends LinearOpMode {
 
         jewelservo.setPosition(.6);
 
-        leftgrabber.setPosition(GlobalVarriables.leftgrabberopen);
-        rightgrabber.setPosition(GlobalVarriables.rightgrabberopen);
+        leftclamp.setPosition(GlobalVarriables.leftclampopen);
+        rightclamp.setPosition(GlobalVarriables.rightclampopen);
 
         rightWheel.setDirection(DcMotorSimple.Direction.FORWARD);
         leftWheel.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -113,7 +114,7 @@ public abstract class Navigation_Routines extends LinearOpMode {
             go_right = !go_right;
             degrees_to_turn = 360 - degrees_to_turn;
         }
-        while (degrees_to_turn > .5 && opModeIsActive()) {
+        while (degrees_to_turn > .5 && opModeIsActive() && runtime.seconds() < 26) {
 
             wheel_power = (10 * Math.pow((degrees_to_turn + 13) / 40, 3) + 18) / 100;
 
@@ -163,7 +164,7 @@ public abstract class Navigation_Routines extends LinearOpMode {
             go_right = !go_right;
             degrees_to_turn = 360 - degrees_to_turn;
         }
-        while (degrees_to_turn > .5 && opModeIsActive()) {
+        while (degrees_to_turn > .5 && opModeIsActive() && runtime.seconds() < 26) {
 
             wheel_power = (10 * Math.pow((degrees_to_turn + 13) / 40, 3) + 20) / 100;
 
@@ -237,7 +238,7 @@ public abstract class Navigation_Routines extends LinearOpMode {
 
         log_timer.reset();
 
-        while (opModeIsActive() && !destination_reached && !safe_zone_found) {
+        while (opModeIsActive() && !destination_reached && !safe_zone_found && runtime.seconds() < 26) {
 
             telemetry.addData("GO_FORWARD ticks_to_travel", ticks_to_travel);
             telemetry.update();
@@ -395,8 +396,8 @@ public abstract class Navigation_Routines extends LinearOpMode {
         sleep(200);
 
         if (UoD == "up") {
-            leftgrabber.setPosition(GlobalVarriables.leftgrabberclosed);
-            rightgrabber.setPosition(GlobalVarriables.rightgrabberclosed);
+            leftclamp.setPosition(GlobalVarriables.leftclampclosed);
+            rightclamp.setPosition(GlobalVarriables.rightclampclosed);
             lifttargetpos = 9 * ticksperinchlift;
         } else if (UoD == "down") {
             lifttargetpos = 0;

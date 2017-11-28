@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.provider.Settings;
+
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -7,8 +9,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import static org.firstinspires.ftc.teamcode.GlobalVarriables.leftgrabberopen;
 
 /**
  * Created by zandr on 9/25/2017.
@@ -20,22 +20,25 @@ public class TeleOp_Current extends OpMode {
     DcMotor rightwheel;
     DcMotor liftmotor;
     DcMotor relicmotor;
-    Servo leftgrabber;
-    Servo rightgrabber;
     Servo jewelservo;
     Servo relicjawangle;
     Servo relicjaw;
+    Servo leftclamp;
+    Servo rightclamp;
     ColorSensor ljewelcs;
     double leftwheelpower;
     double rightwheelpower;
     double relicmotorpower;
     double speedmodifier = 1;
+    double dpad_speed = .3;
+    double dpad_turn_speed = .25;
     double RightStick_x;
     double LeftStick_y;
     double LeftStick_x;
     double PrevLeftStick_y = .1;
     double PrevLeftStick_x = .1;
-    double ReductionFactor;
+    double PrevRightStick_x = .1;
+    double HighestWheelPower;
     double liftencoderstartpos;
     double liftencoderpos;
     double liftheight;
@@ -45,24 +48,38 @@ public class TeleOp_Current extends OpMode {
     double ticksperrev = 560;
     double inchesperrev = 5.375;
     double ticksperinchlift = ticksperrev / inchesperrev;
-    int relicjawanglepos;
+    double relicjawanglepos = 0;
     int reversevalue = 1;
     int liftlevel = 0;
-    int glyphgrabbersetting = 2;
-    boolean slowmode = false;
     boolean joystick_driving = true;
-    boolean leftbumperheld;
     boolean relicjawshut = true;
-    boolean reverse = false;
+    boolean manualliftmode = false;
+    boolean rightclampopen = true;
+    boolean leftclampopen = true;
+    boolean waitingforlefttriggerrelease;
+    boolean waitingforrighttriggerrelease;
+    boolean liftslowdown = false;
 
     //Timers
-    ElapsedTime rightbumpertimer = new ElapsedTime();
-    ElapsedTime righttriggertimer = new ElapsedTime();
-    ElapsedTime leftbumperheldtimer = new ElapsedTime();
-    ElapsedTime lefttriggertimer = new ElapsedTime();
+    ElapsedTime raiseliftimer = new ElapsedTime();
+    ElapsedTime lowerliftimer = new ElapsedTime();
+    ElapsedTime relicjawtimer = new ElapsedTime();
     ElapsedTime reversetimer = new ElapsedTime();
     ElapsedTime relicjawangletimer = new ElapsedTime();
-    
+    ElapsedTime joystickdrivingtimer = new ElapsedTime();
+    ElapsedTime manualliftmodetimer = new ElapsedTime();
+
+    double GetStick(double currentstick,double prevcurrentstick, double sensitivityvalue){
+        if (Math.abs(currentstick - prevcurrentstick) > sensitivityvalue){
+            if ((currentstick - prevcurrentstick) < 0){
+                currentstick = currentstick + sensitivityvalue;
+            } else {
+                currentstick = currentstick - sensitivityvalue;
+            }
+        }
+        return currentstick;
+    }
+
 
     @Override
     public void init() {
@@ -71,30 +88,34 @@ public class TeleOp_Current extends OpMode {
         rightwheel = hardwareMap.dcMotor.get("right");
         liftmotor = hardwareMap.dcMotor.get("lm");
         relicmotor = hardwareMap.dcMotor.get("rm");
-        leftgrabber = hardwareMap.servo.get("lg");
-        rightgrabber = hardwareMap.servo.get("rg");
         jewelservo = hardwareMap.servo.get("js");
         relicjaw = hardwareMap.servo.get("rj");
-        relicjawangle = hardwareMap.servo.get("rga");
+        relicjawangle = hardwareMap.servo.get("rja");
+        leftclamp = hardwareMap.servo.get("lc");
+        rightclamp = hardwareMap.servo.get("rc");
         ljewelcs = hardwareMap.colorSensor.get("jcs");
 
+        //Initializing Positions
         ljewelcs.enableLed(false);
 
-        leftgrabber.setPosition(GlobalVarriables.leftgrabberinit);
-        rightgrabber.setPosition(GlobalVarriables.rightgrabberinit);
+        rightclamp.setPosition(GlobalVarriables.rightclampinit);
+        leftclamp.setPosition(GlobalVarriables.leftclampinit);
 
         jewelservo.setPosition(.6);
-        
+
         relicjaw.setPosition(0);
         relicjawangle.setPosition(0);
 
+        leftwheel.setDirection(DcMotor.Direction.REVERSE);
         leftwheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         rightwheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         liftmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         liftmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         liftmotor.setDirection(DcMotor.Direction.REVERSE);
 
+        relicmotor.setDirection(DcMotor.Direction.REVERSE);
         relicmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         liftencoderstartpos = liftmotor.getCurrentPosition();
@@ -102,207 +123,236 @@ public class TeleOp_Current extends OpMode {
 
     @Override
     public void start() {
+
     }
 
     @Override
     public void loop() {
 
         // General Driving Controls
-        if (gamepad1.right_bumper) {
-            slowmode = true;
+
+        if (gamepad1.right_bumper) {   // Slow Mode
+            speedmodifier = 0.4;
         }
 
-        if (gamepad1.left_bumper) {
-            slowmode = false;
-        }
-
-        if (slowmode) {
-            speedmodifier = 0.25;
-        } else {
+        if (gamepad1.left_bumper) {    // Not Slow Mode
             speedmodifier = 1;
         }
 
-        if (gamepad1.a && reversetimer.seconds() > .4){
-            reverse = ! reverse;
+        if (gamepad1.a && reversetimer.seconds() > .4) {
+            reversevalue = reversevalue * -1;
             reversetimer.reset();
         }
 
-        if (reverse){
-            reversevalue = -1;
-        } else {
-            reversevalue = 1;
-        }
-
         // Relic Arm
-        relicmotorpower = gamepad2.left_stick_y / 2;
+        relicmotorpower = gamepad2.left_stick_y;
         relicmotor.setPower(relicmotorpower);
 
-        if (lefttriggertimer.seconds() > .4 && gamepad2.left_trigger >= .75){
+        if (relicjawtimer.seconds() > .4 && gamepad2.b) {
             relicjawshut = !relicjawshut;
-            lefttriggertimer.reset();
+            relicjawtimer.reset();
         }
 
-        if (!relicjawshut){
+        if (!relicjawshut) {
             relicjaw.setPosition(.5);
         } else {
             relicjaw.setPosition(0);
         }
 
-        if (gamepad2.y && relicjawangletimer.seconds() > .25 && relicjawanglepos < 4){
-            relicjawanglepos += 1;
+        if (gamepad2.y && relicjawangletimer.seconds() > .25 && relicjawanglepos < 1) {
+            relicjawanglepos = relicjawanglepos + .05;
             relicjawangletimer.reset();
-        } else if (gamepad2.a && relicjawangletimer.seconds() > .25 && relicjawanglepos > 0){
-            relicjawanglepos -= 1;
+        } else if (gamepad2.a && relicjawangletimer.seconds() > .25 && relicjawanglepos > 0) {
+            relicjawanglepos = relicjawanglepos - .05;
             relicjawangletimer.reset();
         }
 
-        if (relicjawanglepos == 0){
-            relicjawangle.setPosition(0);
-        } else if (relicjawanglepos == 1){
-            relicjawangle.setPosition(.325);
-        } else if (relicjawanglepos == 2){
-            relicjawangle.setPosition(.4);
-        } else if (relicjawanglepos == 3){
-            relicjawangle.setPosition(.6);
-        } else if (relicjawanglepos == 4){
-            relicjawangle.setPosition(.8);
-        }
-
+        relicjawangle.setPosition(relicjawanglepos);
 
         //Lift
-        liftencoderpos = liftmotor.getCurrentPosition() - liftencoderstartpos;
+        if (gamepad2.dpad_up){
+            liftlevel = 2;
+            rightclampopen = true;
+        }
+        if (gamepad2.dpad_right) {
+            liftlevel = 0;
+            rightclampopen = true;
+        }
 
-        if (gamepad2.right_bumper && rightbumpertimer.seconds() > 0.25 && liftlevel < 4) {
-            rightbumpertimer.reset();
-            liftlevel += 1;
+        if (gamepad2.dpad_left){
+            liftlevel = 2;
+            leftclampopen = true;
         }
-        if (gamepad2.right_trigger == 1 && righttriggertimer.seconds() > 0.25 && liftlevel > 0) {
-            righttriggertimer.reset();
-            liftlevel -= 1;
+        if (gamepad2.dpad_down) {
+            liftlevel = 0;
+            leftclampopen = true;
         }
-        if (liftlevel == 0) {
-            liftheight = 0;
+
+        if (gamepad2.back && manualliftmodetimer.seconds() > .4) {
+            manualliftmode = !manualliftmode;
+            manualliftmodetimer.reset();
+        }
+        if (gamepad2.x) {
+            liftencoderstartpos = liftmotor.getCurrentPosition();
+        }
+
+        if (manualliftmode) {
+            liftmotor.setPower(-gamepad2.right_stick_y);
         } else {
-            liftheight = liftclearance + ((liftlevel - 1) * blockheight);
-        }
-        lifttargetpos = liftheight * ticksperinchlift;
-
-        if (lifttargetpos < liftencoderpos - 40) {
-            if (liftencoderpos - lifttargetpos > 120) {
-                liftmotor.setPower(-.8);
+            liftencoderpos = liftmotor.getCurrentPosition() - liftencoderstartpos;
+            if (gamepad2.right_stick_y >= .9 && raiseliftimer.seconds() > .25 && liftlevel > 0) {
+                raiseliftimer.reset();
+                liftlevel -= 1;
+            }
+            if (gamepad2.right_stick_y <= -.9 && lowerliftimer.seconds() > .25 && liftlevel < 5) {
+                lowerliftimer.reset();
+                liftlevel += 1;
+            }
+            if (liftlevel == 0) {
+                liftheight = 0;
+            } else if (liftlevel == 1) {
+                liftheight = liftclearance;
+            } else if (liftlevel == 2) {
+                liftheight = blockheight;
             } else {
-                liftmotor.setPower(-.3);
+                liftheight = liftclearance + ((liftlevel - 2) * blockheight);
             }
+            lifttargetpos = liftheight * ticksperinchlift;
 
-        } else if (lifttargetpos > liftencoderpos + 40) {
-            if (lifttargetpos - liftencoderpos > 120) {
-                liftmotor.setPower(1);
+            if (lifttargetpos < liftencoderpos - 40) {
+                if (liftslowdown){
+                    liftmotor.setPower(-.3);
+                } else if (liftencoderpos - lifttargetpos > 120) {
+                    liftmotor.setPower(-.8);
+                } else {
+                    liftmotor.setPower(-.3);
+                }
+
+            } else if (lifttargetpos > liftencoderpos + 40) {
+                if (liftslowdown){
+                    liftmotor.setPower(.3);
+                } else if (lifttargetpos - liftencoderpos > 120) {
+                    liftmotor.setPower(1);
+                } else {
+                    liftmotor.setPower(.6);
+                }
             } else {
-                liftmotor.setPower(.6);
+                liftmotor.setPower(0);
+                liftslowdown = false;
             }
-        } else {
-            liftmotor.setPower(0);
         }
 
-        // Glyph Grabber and Glyph Pushers
-        if (gamepad2.left_bumper && !leftbumperheld) { // Checking if the left bumper is staring to be held
-            leftbumperheldtimer.reset();
-            leftbumperheld = true;
-        } else if (!gamepad2.left_bumper && leftbumperheld) { // Checking if the left bumper has been released and changing the grabber position based on the time held
-            if (leftbumperheldtimer.seconds() >= 1.5 && glyphgrabbersetting != 2) {
-                glyphgrabbersetting = 2;
-            } else if (glyphgrabbersetting != 1) {
-                glyphgrabbersetting = 1;
-            } else if (glyphgrabbersetting != 0) {
-                glyphgrabbersetting = 0;
+        // Glyph Grabbers
+        if (gamepad2.left_trigger > .75 && leftclampopen) {
+            leftclampopen = false;
+            waitingforlefttriggerrelease = true;
+        }
+        if (waitingforlefttriggerrelease && gamepad2.left_trigger < .1){
+            if (liftlevel < 5) {
+                liftlevel += 1;
             }
-            leftbumperheld = false;
+            waitingforlefttriggerrelease = false;
+            liftslowdown = true;
         }
 
-        if (glyphgrabbersetting == 1) {
-            leftgrabber.setPosition(GlobalVarriables.leftgrabberopen);
-            rightgrabber.setPosition(GlobalVarriables.rightgrabberopen);
-        } else if (glyphgrabbersetting == 0) {
-            leftgrabber.setPosition(GlobalVarriables.leftgrabberclosed);
-            rightgrabber.setPosition(GlobalVarriables.rightgrabberclosed);
-        } else if (glyphgrabbersetting == 2) {
-            leftgrabber.setPosition(GlobalVarriables.leftgrabberinit);
-            rightgrabber.setPosition(GlobalVarriables.rightgrabberinit);
+        if (gamepad2.right_trigger > .75 && rightclampopen) {
+            rightclampopen = false;
+            waitingforrighttriggerrelease = true;
+        }
+        if (waitingforrighttriggerrelease && gamepad2.right_trigger < .1){
+            if (liftlevel < 5) {
+                liftlevel += 1;
+            }
+            liftslowdown = true;
+            waitingforrighttriggerrelease = false;
+        }
+
+        if (gamepad2.left_bumper && !leftclampopen) {
+            leftclampopen = true;
+        }
+
+        if (gamepad2.right_bumper && !rightclampopen) {
+            rightclampopen = true;
+        }
+
+        if (leftclampopen) {
+            leftclamp.setPosition(GlobalVarriables.leftclampopen);
+        } else if (!leftclampopen) {
+            leftclamp.setPosition(GlobalVarriables.leftclampclosed);
+        }
+
+        if (rightclampopen) {
+            rightclamp.setPosition(GlobalVarriables.rightclampopen);
+        } else if (!rightclampopen) {
+            rightclamp.setPosition(GlobalVarriables.rightclampclosed);
         }
 
 
         //One Joystick Driving
-        if (gamepad1.back) {
+        if (gamepad1.back && joystickdrivingtimer.seconds() > .4) {
             joystick_driving = !joystick_driving;
+            joystickdrivingtimer.reset();
         }
 
         if (joystick_driving) {
-            LeftStick_y = gamepad1.left_stick_y * speedmodifier;
 
-            if (LeftStick_y > 0 && LeftStick_y > PrevLeftStick_y) {
-                LeftStick_y = PrevLeftStick_y + .01;
-                if (LeftStick_y < .1) {
-                    LeftStick_y = .1;
-                }
-            } else if (LeftStick_y < 0 && LeftStick_y < PrevLeftStick_y) {
-                LeftStick_y = PrevLeftStick_y - .01;
-                if (LeftStick_y > -.1) {
-                    LeftStick_y = -.1;
-                }
-            }
+            LeftStick_y = GetStick(gamepad1.left_stick_y * -1, PrevLeftStick_y, .01);  // multiply by -1 to flip y so that positive is up, negative is down
             PrevLeftStick_y = LeftStick_y;
 
-            LeftStick_x = gamepad1.left_stick_x * speedmodifier;
-
-            if (LeftStick_x > 0 && LeftStick_x > PrevLeftStick_x) {
-                LeftStick_x = PrevLeftStick_x + .01;
-                if (LeftStick_x < .1) {
-                    LeftStick_x = .1;
-                }
-            } else if (LeftStick_x < 0 && LeftStick_x < PrevLeftStick_x) {
-                LeftStick_x = PrevLeftStick_x - .01;
-                if (LeftStick_x > -.1) {
-                    LeftStick_x = -.1;
-                }
-            }
+            LeftStick_x = GetStick(gamepad1.left_stick_x,PrevLeftStick_x, .01);
             PrevLeftStick_x = LeftStick_x;
 
-            RightStick_x = gamepad1.right_stick_x * speedmodifier;
-            if (Math.abs(LeftStick_y) < .1 && Math.abs(LeftStick_x) > .1) {//  Now we're in spinning mode
-                leftwheelpower = -LeftStick_x * reversevalue;
-                rightwheelpower = LeftStick_x * reversevalue;
-            } else {
-                if (LeftStick_y > 0) {
-                    RightStick_x = -RightStick_x;
-                }
-                leftwheelpower = LeftStick_y - (RightStick_x / 2.02);
-                rightwheelpower = LeftStick_y + (RightStick_x / 2.02);
-                ReductionFactor = Math.max(Math.abs(leftwheelpower), Math.abs(rightwheelpower)) - 1;
-                if (ReductionFactor > 0) {
-                    if (LeftStick_y < 0) {
-                        ReductionFactor = -ReductionFactor;
-                    }
-                    leftwheelpower = leftwheelpower - ReductionFactor;
-                    rightwheelpower = rightwheelpower - ReductionFactor;
-                }
+            RightStick_x = GetStick(gamepad1.right_stick_x,PrevRightStick_x, .01);
+            PrevRightStick_x = RightStick_x;
 
+            if (Math.abs(LeftStick_y) < .1 && Math.abs(LeftStick_x) > .1) {  //  Now we're in spinning mode
+                leftwheelpower = LeftStick_x * reversevalue;
+                rightwheelpower = -LeftStick_x * reversevalue;
+            } else {  // Left stick forward/backward driving mode, ignores left stick x, turns using right stick x
+                leftwheelpower = LeftStick_y;
+                rightwheelpower = LeftStick_y;
+                if (Math.abs(RightStick_x) > 0) {
+                    RightStick_x = RightStick_x * reversevalue / 1.8;
+                    rightwheelpower = rightwheelpower - RightStick_x;
+                    leftwheelpower = leftwheelpower + RightStick_x;
+                    HighestWheelPower = Math.max(Math.abs(leftwheelpower), Math.abs(rightwheelpower));  // keep wheel power from going over 1
+                    if (HighestWheelPower > 1) {
+                        leftwheelpower = leftwheelpower / HighestWheelPower;
+                        rightwheelpower = rightwheelpower / HighestWheelPower;
+                    }
+                }
             }
-        } else {
-            leftwheelpower = gamepad1.left_stick_y * speedmodifier;
-            rightwheelpower = gamepad1.right_stick_y * speedmodifier;
+
+        } else {  // Simple 2 joystick driving
+            leftwheelpower = gamepad1.left_stick_y;
+            rightwheelpower = gamepad1.right_stick_y;
         }
 
-        leftwheel.setPower(leftwheelpower * reversevalue);
-        rightwheel.setPower(-rightwheelpower * reversevalue);
+        if(gamepad1.dpad_up){
+            leftwheelpower = dpad_speed;
+            rightwheelpower = dpad_speed;
+        } else if (gamepad1.dpad_down){
+            leftwheelpower = -dpad_speed;
+            rightwheelpower = -dpad_speed;
+        } else if (gamepad1.dpad_left){
+            leftwheelpower = -dpad_turn_speed;
+            rightwheelpower = dpad_turn_speed;
+        } else if (gamepad1.dpad_right){
+            leftwheelpower = dpad_turn_speed;
+            rightwheelpower = -dpad_turn_speed;
+        }
+        leftwheel.setPower(leftwheelpower * reversevalue * speedmodifier);
+        rightwheel.setPower(rightwheelpower * reversevalue * speedmodifier);
 
 
         telemetry.addData("lift level", liftlevel);
+        telemetry.addData("Reverse Value", reversevalue);
+
         telemetry.update();
     }
 
     @Override
     public void stop() {
-        leftgrabber.setPosition(GlobalVarriables.leftgrabberinit);
-        rightgrabber.setPosition(GlobalVarriables.rightgrabberinit);
+
     }
 }

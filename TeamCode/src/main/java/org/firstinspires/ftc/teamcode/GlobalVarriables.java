@@ -5,10 +5,11 @@ package org.firstinspires.ftc.teamcode;
  */
 
 public class GlobalVarriables {
-    public static final double leftgrabberclosed = .55;
-    public static final double rightgrabberclosed = .5;
-    public static final double leftgrabberopen = 0;
-    public static final double rightgrabberopen = 1;
-    public static final double leftgrabberinit = 1;
-    public static final double rightgrabberinit = 0;
+    public static final double rightclampopen = .5;
+    public static final double rightclampclosed = 0;
+    public static final double rightclampinit = 1;
+    public static final double leftclampopen = .5;
+    public static final double leftclampclosed = 1;
+    public static final double leftclampinit = 0;
+
 }
