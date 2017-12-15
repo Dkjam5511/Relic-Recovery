@@ -23,33 +23,43 @@ public class Top_Red extends Navigation_Routines {
         jewelknock("red");
 
         if (vuforiareading == "RIGHT"){
-            go_forward(23, 0,.7);
-            turn_to_heading(123);
-            go_forward(26,123,.7);
+            go_forward(20, 0,.2, false);
+            turn_to_heading_pirouette(128, false);
+            go_forward(16,128,.2, false);
+            sleep(300);
+            lift_glyph("down");
+            sleep(500);
             leftclamp.setPosition(GlobalVarriables.leftclampopen);
             rightclamp.setPosition(GlobalVarriables.rightclampopen);
-            sleep(2000);
+            sleep(1000);
+            go_forward(2,128,-.2, true);
+
 
         } else if (vuforiareading == "LEFT"){
-            go_forward(27.5, 0,.7);
-            turn_to_heading(90);
-            go_forward(13.5,90,.7);
-            turn_to_heading(120);
-            go_forward(10,120, .7);
+            go_forward(27.5, 0,.2, false);
+            turn_to_heading_pirouette(90, false);
+            go_forward(11,90,.2, false);
+            turn_to_heading_pirouette(120, false);
+            go_forward(6.5,120, .2, false);
+            sleep(300);
+            lift_glyph("down");
+            sleep(500);
             leftclamp.setPosition(GlobalVarriables.leftclampopen);
             rightclamp.setPosition(GlobalVarriables.rightclampopen);
-            sleep(2000);
+            sleep(1000);
+            go_forward(2,118,-.2, true);
+
+        } else { // center
+            go_forward(27.5, 0,.2, false);
+            turn_to_heading_pirouette(124, false);
+            go_forward(24,124,.2, false);
+            sleep(300);
             lift_glyph("down");
-            go_forward(1,120,-.7);
-        } else {
-            go_forward(27, 0,.7);
-            turn_to_heading(116);
-            go_forward(26,116,.7);
+            sleep(500);
             leftclamp.setPosition(GlobalVarriables.leftclampopen);
             rightclamp.setPosition(GlobalVarriables.rightclampopen);
-            sleep(2000);
-            lift_glyph("down");
-            go_forward(2,116,-.7);
+            sleep(1000);
+            go_forward(2,124,-.2, true);
         }
 
     }

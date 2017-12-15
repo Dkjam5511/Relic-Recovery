@@ -21,6 +21,7 @@ public class TeleOp_Current extends OpMode {
     DcMotor liftmotor;
     DcMotor relicmotor;
     Servo jewelservo;
+    Servo sidejewelservo;
     Servo relicjawangle;
     Servo relicjaw;
     Servo leftclamp;
@@ -35,9 +36,9 @@ public class TeleOp_Current extends OpMode {
     double RightStick_x;
     double LeftStick_y;
     double LeftStick_x;
-    double PrevLeftStick_y = .1;
-    double PrevLeftStick_x = .1;
-    double PrevRightStick_x = .1;
+    double PrevLeftStick_y = 0;
+    double PrevLeftStick_x = 0;
+    double PrevRightStick_x = 0;
     double HighestWheelPower;
     double liftencoderstartpos;
     double liftencoderpos;
@@ -51,11 +52,11 @@ public class TeleOp_Current extends OpMode {
     double relicjawanglepos = 0;
     int reversevalue = 1;
     int liftlevel = 0;
+    int rightclampsetting = 2; // 0 is closed 1 is open and 2 is init
+    int leftclampsetting = 2; // 0 is closed 1 is open and 2 is init
     boolean joystick_driving = true;
     boolean relicjawshut = true;
     boolean manualliftmode = false;
-    boolean rightclampopen = true;
-    boolean leftclampopen = true;
     boolean waitingforlefttriggerrelease;
     boolean waitingforrighttriggerrelease;
     boolean liftslowdown = false;
@@ -68,16 +69,27 @@ public class TeleOp_Current extends OpMode {
     ElapsedTime relicjawangletimer = new ElapsedTime();
     ElapsedTime joystickdrivingtimer = new ElapsedTime();
     ElapsedTime manualliftmodetimer = new ElapsedTime();
+    ElapsedTime leftstickxtimer = new ElapsedTime();
+    ElapsedTime leftstickytimer = new ElapsedTime();
+    ElapsedTime rightstickxtimer = new ElapsedTime();
 
-    double GetStick(double currentstick,double prevcurrentstick, double sensitivityvalue){
-        if (Math.abs(currentstick - prevcurrentstick) > sensitivityvalue){
-            if ((currentstick - prevcurrentstick) < 0){
-                currentstick = currentstick + sensitivityvalue;
+
+    double GetStick(double newstickvalue, double prevstickvalue, double sensitivityvalue, ElapsedTime timesinceaccel) {
+        double returnstickvalue;
+        returnstickvalue = prevstickvalue;
+        if (timesinceaccel.seconds() > .001) {
+            if ((Math.abs(newstickvalue - prevstickvalue) > sensitivityvalue)) {
+                if (newstickvalue > prevstickvalue) {
+                    returnstickvalue = prevstickvalue + sensitivityvalue;
+                } else {
+                    returnstickvalue = prevstickvalue - sensitivityvalue;
+                }
             } else {
-                currentstick = currentstick - sensitivityvalue;
+                returnstickvalue = newstickvalue;  
             }
+
         }
-        return currentstick;
+        return returnstickvalue;
     }
 
 
@@ -88,20 +100,20 @@ public class TeleOp_Current extends OpMode {
         rightwheel = hardwareMap.dcMotor.get("right");
         liftmotor = hardwareMap.dcMotor.get("lm");
         relicmotor = hardwareMap.dcMotor.get("rm");
+        sidejewelservo = hardwareMap.servo.get("sjs");
         jewelservo = hardwareMap.servo.get("js");
         relicjaw = hardwareMap.servo.get("rj");
         relicjawangle = hardwareMap.servo.get("rja");
         leftclamp = hardwareMap.servo.get("lc");
         rightclamp = hardwareMap.servo.get("rc");
-        ljewelcs = hardwareMap.colorSensor.get("jcs");
 
         //Initializing Positions
-        ljewelcs.enableLed(false);
 
         rightclamp.setPosition(GlobalVarriables.rightclampinit);
         leftclamp.setPosition(GlobalVarriables.leftclampinit);
 
         jewelservo.setPosition(.6);
+        sidejewelservo.setPosition(.2);
 
         relicjaw.setPosition(0);
         relicjawangle.setPosition(0);
@@ -113,7 +125,6 @@ public class TeleOp_Current extends OpMode {
 
         liftmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         liftmotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        liftmotor.setDirection(DcMotor.Direction.REVERSE);
 
         relicmotor.setDirection(DcMotor.Direction.REVERSE);
         relicmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -170,22 +181,22 @@ public class TeleOp_Current extends OpMode {
         relicjawangle.setPosition(relicjawanglepos);
 
         //Lift
-        if (gamepad2.dpad_up){
+        if (gamepad2.dpad_up) {
             liftlevel = 2;
-            rightclampopen = true;
+            rightclampsetting = 1;
         }
         if (gamepad2.dpad_right) {
             liftlevel = 0;
-            rightclampopen = true;
+            rightclampsetting = 1;
         }
 
-        if (gamepad2.dpad_left){
+        if (gamepad2.dpad_left) {
             liftlevel = 2;
-            leftclampopen = true;
+            leftclampsetting = 1;
         }
         if (gamepad2.dpad_down) {
             liftlevel = 0;
-            leftclampopen = true;
+            leftclampsetting = 1;
         }
 
         if (gamepad2.back && manualliftmodetimer.seconds() > .4) {
@@ -220,7 +231,7 @@ public class TeleOp_Current extends OpMode {
             lifttargetpos = liftheight * ticksperinchlift;
 
             if (lifttargetpos < liftencoderpos - 40) {
-                if (liftslowdown){
+                if (liftslowdown) {
                     liftmotor.setPower(-.3);
                 } else if (liftencoderpos - lifttargetpos > 120) {
                     liftmotor.setPower(-.8);
@@ -229,7 +240,7 @@ public class TeleOp_Current extends OpMode {
                 }
 
             } else if (lifttargetpos > liftencoderpos + 40) {
-                if (liftslowdown){
+                if (liftslowdown) {
                     liftmotor.setPower(.3);
                 } else if (lifttargetpos - liftencoderpos > 120) {
                     liftmotor.setPower(1);
@@ -240,14 +251,15 @@ public class TeleOp_Current extends OpMode {
                 liftmotor.setPower(0);
                 liftslowdown = false;
             }
+
         }
 
         // Glyph Grabbers
-        if (gamepad2.left_trigger > .75 && leftclampopen) {
-            leftclampopen = false;
+        if (gamepad2.left_trigger > .75 && leftclampsetting != 0) {
+            leftclampsetting = 0;
             waitingforlefttriggerrelease = true;
         }
-        if (waitingforlefttriggerrelease && gamepad2.left_trigger < .1){
+        if (waitingforlefttriggerrelease && gamepad2.left_trigger < .1) {
             if (liftlevel < 5) {
                 liftlevel += 1;
             }
@@ -255,11 +267,11 @@ public class TeleOp_Current extends OpMode {
             liftslowdown = true;
         }
 
-        if (gamepad2.right_trigger > .75 && rightclampopen) {
-            rightclampopen = false;
+        if (gamepad2.right_trigger > .75 && rightclampsetting != 0) {
+            rightclampsetting = 0;
             waitingforrighttriggerrelease = true;
         }
-        if (waitingforrighttriggerrelease && gamepad2.right_trigger < .1){
+        if (waitingforrighttriggerrelease && gamepad2.right_trigger < .1) {
             if (liftlevel < 5) {
                 liftlevel += 1;
             }
@@ -267,23 +279,27 @@ public class TeleOp_Current extends OpMode {
             waitingforrighttriggerrelease = false;
         }
 
-        if (gamepad2.left_bumper && !leftclampopen) {
-            leftclampopen = true;
+        if (gamepad2.left_bumper && leftclampsetting != 2) {
+            leftclampsetting = 2;
         }
 
-        if (gamepad2.right_bumper && !rightclampopen) {
-            rightclampopen = true;
+        if (gamepad2.right_bumper && rightclampsetting != 2) {
+            rightclampsetting = 2;
         }
 
-        if (leftclampopen) {
+        if (leftclampsetting == 2) {
+            leftclamp.setPosition(GlobalVarriables.leftclampinit);
+        } else if (leftclampsetting == 1) {
             leftclamp.setPosition(GlobalVarriables.leftclampopen);
-        } else if (!leftclampopen) {
+        } else if (leftclampsetting == 0){
             leftclamp.setPosition(GlobalVarriables.leftclampclosed);
         }
 
-        if (rightclampopen) {
+        if (rightclampsetting == 2) {
+            rightclamp.setPosition(GlobalVarriables.rightclampinit);
+        } else if (rightclampsetting == 1) {
             rightclamp.setPosition(GlobalVarriables.rightclampopen);
-        } else if (!rightclampopen) {
+        } else if (rightclampsetting == 0){
             rightclamp.setPosition(GlobalVarriables.rightclampclosed);
         }
 
@@ -296,14 +312,23 @@ public class TeleOp_Current extends OpMode {
 
         if (joystick_driving) {
 
-            LeftStick_y = GetStick(gamepad1.left_stick_y * -1, PrevLeftStick_y, .01);  // multiply by -1 to flip y so that positive is up, negative is down
-            PrevLeftStick_y = LeftStick_y;
+            LeftStick_y = GetStick(gamepad1.left_stick_y * -.8, PrevLeftStick_y, .1, leftstickytimer);  // multiply by -1 to flip y so that positive is up, negative is down
+            if (PrevLeftStick_y != LeftStick_y) {
+                PrevLeftStick_y = LeftStick_y;
+                leftstickytimer.reset();
+            }
 
-            LeftStick_x = GetStick(gamepad1.left_stick_x,PrevLeftStick_x, .01);
-            PrevLeftStick_x = LeftStick_x;
+            LeftStick_x = GetStick(gamepad1.left_stick_x * .8, PrevLeftStick_x, .05, leftstickxtimer);
+            if (PrevLeftStick_x != LeftStick_x) {
+                PrevLeftStick_x = LeftStick_x;
+                leftstickxtimer.reset();
+            }
 
-            RightStick_x = GetStick(gamepad1.right_stick_x,PrevRightStick_x, .01);
-            PrevRightStick_x = RightStick_x;
+            RightStick_x = GetStick(gamepad1.right_stick_x * .8, PrevRightStick_x, .05, rightstickxtimer);
+            if (PrevRightStick_x != RightStick_x) {
+                PrevRightStick_x = RightStick_x;
+                rightstickxtimer.reset();
+            }
 
             if (Math.abs(LeftStick_y) < .1 && Math.abs(LeftStick_x) > .1) {  //  Now we're in spinning mode
                 leftwheelpower = LeftStick_x * reversevalue;
@@ -322,22 +347,21 @@ public class TeleOp_Current extends OpMode {
                     }
                 }
             }
-
         } else {  // Simple 2 joystick driving
             leftwheelpower = gamepad1.left_stick_y;
             rightwheelpower = gamepad1.right_stick_y;
         }
 
-        if(gamepad1.dpad_up){
+        if (gamepad1.dpad_up) {
             leftwheelpower = dpad_speed;
             rightwheelpower = dpad_speed;
-        } else if (gamepad1.dpad_down){
+        } else if (gamepad1.dpad_down) {
             leftwheelpower = -dpad_speed;
             rightwheelpower = -dpad_speed;
-        } else if (gamepad1.dpad_left){
+        } else if (gamepad1.dpad_left) {
             leftwheelpower = -dpad_turn_speed;
             rightwheelpower = dpad_turn_speed;
-        } else if (gamepad1.dpad_right){
+        } else if (gamepad1.dpad_right) {
             leftwheelpower = dpad_turn_speed;
             rightwheelpower = -dpad_turn_speed;
         }
@@ -347,6 +371,7 @@ public class TeleOp_Current extends OpMode {
 
         telemetry.addData("lift level", liftlevel);
         telemetry.addData("Reverse Value", reversevalue);
+        telemetry.addData("Relic Jaw Angle Pos", relicjawanglepos);
 
         telemetry.update();
     }

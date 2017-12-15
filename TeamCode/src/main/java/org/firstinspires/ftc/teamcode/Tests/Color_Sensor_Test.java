@@ -1,28 +1,22 @@
 package org.firstinspires.ftc.teamcode.Tests;
 
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.teamcode.Navigation_Routines;
 
 /**
  * Created by Drew on 9/16/2017.
  */
-@TeleOp(name = "CS_Test", group = "Tests")
-public class Color_Sensor_Test extends OpMode {
-
-    ColorSensor color_sensor;
+@Autonomous(name = "CS_Test", group = "Tests")
+public class Color_Sensor_Test extends Navigation_Routines {
 
     @Override
-    public void init() {
-        color_sensor = hardwareMap.colorSensor.get("jcs");
-        color_sensor.enableLed(false);
+    public void runOpMode() throws InterruptedException {
+        NAV_init();
+        jewelknockside("red");
+        sleep(10000);
     }
 
-    @Override
-    public void loop() {
-        telemetry.addData("Red :", color_sensor.red());
-        telemetry.addData("Blue :", color_sensor.blue());
-        telemetry.addData("Green :", color_sensor.green());
-        telemetry.addData("Alpha :", color_sensor.alpha());
-    }
+
 }

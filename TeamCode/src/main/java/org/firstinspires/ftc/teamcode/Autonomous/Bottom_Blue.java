@@ -9,7 +9,7 @@ import org.firstinspires.ftc.teamcode.GlobalVarriables;
 /**
  * Created by Drew on 10/25/2017.
  */
-@Autonomous (name = "Bottom_Blue", group = "Autonomous")
+@Autonomous(name = "Bottom_Blue", group = "Autonomous")
 public class Bottom_Blue extends Navigation_Routines {
 
     String vuforiareading;
@@ -20,40 +20,41 @@ public class Bottom_Blue extends Navigation_Routines {
         runtime.reset();
         lift_glyph("up");
         vuforiareading = vuforia_scan();
-        jewelknock("blue");
-        turn_to_heading_pirouette(325);
-        turn_to_heading_pirouette(290);
-        go_forward(2,290,.6);
-               turn_to_heading_pirouette(270);
+        jewelknockside("blue");
 
-        if (vuforiareading == "LEFT"){
-            go_forward(13.5, 270,.7);
-            turn_to_heading(180);
-            go_forward(4,180,.5);
+        if (vuforiareading == "LEFT") {
+            go_forward(26, 0, -.2, false);
+            turn_to_heading_pirouette(50 , true);
+            go_forward(6, 50, .2, false);
+            sleep(300);
+            lift_glyph("down");
+            sleep(500);
             leftclamp.setPosition(GlobalVarriables.leftclampopen);
             rightclamp.setPosition(GlobalVarriables.rightclampopen);
-            sleep(2000);
+            sleep(1000);
+            go_forward(2, 50, -.2, true);
+        } else if (vuforiareading == "RIGHT") {
+            go_forward(32.5, 0, -.2, false);
+            turn_to_heading_pirouette(65, true);
+            go_forward(6, 65, .2, false);
+            sleep(300);
             lift_glyph("down");
-            go_forward(1,180,-.7);
-        } else if (vuforiareading == "RIGHT"){
-            go_forward(1.5, 270,.7);
-            turn_to_heading(180);
-            go_forward(4,180,.7);
+            sleep(500);
             leftclamp.setPosition(GlobalVarriables.leftclampopen);
             rightclamp.setPosition(GlobalVarriables.rightclampopen);
-            sleep(2000);
+            sleep(1000);
+            go_forward(2, 65, -.2, true);
+        } else {  //center
+            go_forward(32, 0, -.2, false);
+            turn_to_heading_pirouette(50, true);
+            go_forward(6, 50, .2, false);
+            sleep(300);
             lift_glyph("down");
-            go_forward(1,180,-.7);
-        } else{
-            go_forward(6,270,.7);
-            turn_to_heading(180);
-            go_forward(4,180,.7);
+            sleep(500);
             leftclamp.setPosition(GlobalVarriables.leftclampopen);
             rightclamp.setPosition(GlobalVarriables.rightclampopen);
-            sleep(2000);
-            lift_glyph("down");
-            sleep(200);
-            go_forward(1,180,-.7);
+            sleep(1000);
+            go_forward(2, 50, -.2, true);
         }
     }
 }
