@@ -45,16 +45,16 @@ public class Bottom_Red extends Navigation_Routines {
             sleep(1000);
             go_forward(2, 65, -.2, true);
         } else {  //center
-            go_forward(36.5, 0, .2, false);
-            turn_to_heading_pirouette(50, true);
-            go_forward(6, 50, .2, false);
+            go_forward(35.5, 0, .2, false);
+            turn_to_heading_pirouette(52, true);
+            go_forward(6, 52, .2, false);
             sleep(300);
             lift_glyph("down");
             sleep(500);
             leftclamp.setPosition(GlobalVarriables.leftclampopen);
             rightclamp.setPosition(GlobalVarriables.rightclampopen);
             sleep(1000);
-            go_forward(2, 50, -.2, true);
+            go_forward(2, 52, -.2, true);
         }
     }
 }

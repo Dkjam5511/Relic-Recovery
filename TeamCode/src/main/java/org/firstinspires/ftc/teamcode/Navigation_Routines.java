@@ -1,6 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.os.Environment;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -8,8 +12,12 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.vuforia.Image;
+import com.vuforia.PIXEL_FORMAT;
+import com.vuforia.Vuforia;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
@@ -17,7 +25,17 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import static java.lang.System.out;
+
 
 /**
  * Created by Drew on 9/17/2017.
@@ -99,6 +117,14 @@ public abstract class Navigation_Routines extends LinearOpMode {
         angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
 
         liftencoderstartpos = liftmotor.getCurrentPosition();
+
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+
+        parameters.vuforiaLicenseKey = "AWaEPBn/////AAAAGWa1VK57tkUipP01PNk9ghlRuxjK1Oh1pmbHuRnpaJI0vi57dpbnIkpee7J1pQ2RIivfEFrobqblxS3dKUjRo52NMJab6Me2Yhz7ejs5SDn4G5dheW5enRNWmRBsL1n+9ica/nVjG8xvGc1bOBRsIeZyL3EZ2tKSJ407BRgMwNOmaLPBle1jxqAE+eLSoYsz/FuC1GD8c4S3luDm9Utsy/dM1W4dw0hDJFc+lve9tBKGBX0ggj6lpo9GUrTC8t19YJg58jsIXO/DiF09a5jlrTeB2LK+GndUDEGyZA1mS3yAR6aIBeDYnFw+79mVFIkTPk8wv3HIQfzoggCu0AwWJBVUVjkDxJOWfzCGjaHylZlo";
+
+        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.FRONT;
+        this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
 
         while (!isStarted()) {
             telemetry.update();
@@ -350,35 +376,115 @@ public abstract class Navigation_Routines extends LinearOpMode {
 
     public String vuforia_scan() {
 
+        DbgLog.msg("10435 Starting Vuforia_Scan");
+
         ElapsedTime vuforiascantime = new ElapsedTime();
 
         boolean picturefound = false;
 
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-
-        parameters.vuforiaLicenseKey = "AWaEPBn/////AAAAGWa1VK57tkUipP01PNk9ghlRuxjK1Oh1pmbHuRnpaJI0vi57dpbnIkpee7J1pQ2RIivfEFrobqblxS3dKUjRo52NMJab6Me2Yhz7ejs5SDn4G5dheW5enRNWmRBsL1n+9ica/nVjG8xvGc1bOBRsIeZyL3EZ2tKSJ407BRgMwNOmaLPBle1jxqAE+eLSoYsz/FuC1GD8c4S3luDm9Utsy/dM1W4dw0hDJFc+lve9tBKGBX0ggj6lpo9GUrTC8t19YJg58jsIXO/DiF09a5jlrTeB2LK+GndUDEGyZA1mS3yAR6aIBeDYnFw+79mVFIkTPk8wv3HIQfzoggCu0AwWJBVUVjkDxJOWfzCGjaHylZlo";
-
-        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.FRONT;
-        this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
-
         VuforiaTrackables relicTrackables = this.vuforia.loadTrackablesFromAsset("RelicVuMark");
         VuforiaTrackable relicTemplate = relicTrackables.get(0);
-
         relicTrackables.activate();
 
         vuforiascantime.reset();
         while (opModeIsActive() && !picturefound && vuforiascantime.seconds() < 5) {
             RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
+            
             if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
-                telemetry.addData("VuMark", "%s visible", vuMark);
                 picturereading = vuMark.toString();
+                telemetry.addData("Vumark visible:", picturereading);
                 picturefound = true;
             } else {
-                telemetry.addData("VuMark", "not visible");
+                telemetry.addLine("VuMark not visible");
             }
             telemetry.update();
         }
+
+        DbgLog.msg("10435 Vuforia_Scan: " + "picturereading:" + picturereading);
+
+        Image rgbImage = null;
+
+        Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true);
+        VuforiaLocalizer.CloseableFrame closeableframe = null;
+        this.vuforia.setFrameQueueCapacity(6);
+
+        try{
+            closeableframe = this.vuforia.getFrameQueue().take();
+            long numImages = closeableframe.getNumImages();
+
+            for (int i = 0; i < numImages; i++) {
+                if (closeableframe.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
+                    rgbImage = closeableframe.getImage(i);
+                    break;
+                }
+            }
+        }
+        catch(InterruptedException exc){
+            return null;
+        }
+        finally{
+            if (closeableframe != null) closeableframe.close();
+        }
+
+        if (rgbImage != null) {
+
+            Bitmap bm = Bitmap.createBitmap(rgbImage.getWidth(), rgbImage.getHeight(), Bitmap.Config.RGB_565);
+            bm.copyPixelsFromBuffer(rgbImage.getPixels());
+            double redcount = 0;
+            double bluecount = 0;
+            int bmwidth;
+            int bmheight;
+            int onepixel;
+            int redbluediv = 100000;
+
+            bmheight = bm.getHeight();
+            bmwidth = bm.getWidth();
+
+            int iheight, jwidth;
+            for (iheight = (int) (bmheight * .6); iheight < bmheight; ++iheight) {
+                for (jwidth = 0; jwidth < bmwidth * .3; ++jwidth) {
+                    onepixel = bm.getPixel(jwidth, iheight);
+                    redcount += Color.red(onepixel);
+                    bluecount += Color.blue(onepixel);
+                }
+            }
+
+            //saves the bitmap as a file
+            String path = Environment.getExternalStorageDirectory().toString();
+            FileOutputStream out = null;
+            try {
+                File file = new File(path, "Bitmap.png");
+                out = new FileOutputStream(file);
+                bm.compress(Bitmap.CompressFormat.PNG, 100, out);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (out != null) {
+                        out.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+
+            redcount = redcount / redbluediv;
+            bluecount = bluecount / redbluediv;
+            telemetry.addData("Red count:", redcount);
+            telemetry.addData("Blue count:", bluecount);
+            DbgLog.msg("10435 Vuforia_Scan:"
+                    + " Red Count:" + Double.toString(redcount)
+                    + " Blue Count:" + Double.toString(bluecount)
+                    + " ImageXsize:" + Integer.toString(bm.getWidth())
+                    + " ImageYsize:" + Integer.toString(bm.getHeight())
+            );
+
+        }
+        telemetry.update();
+        sleep(4000);
+
+        DbgLog.msg("10435 Ending Vuforia_Scan");
 
         return picturereading;
     }
