@@ -1,9 +1,7 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.Navigation_Routines;
 import org.firstinspires.ftc.teamcode.GlobalVarriables;
 
 /**
@@ -11,8 +9,7 @@ import org.firstinspires.ftc.teamcode.GlobalVarriables;
  */
 @Autonomous (name = "Top_Red", group = "Autonomous")
 public class Top_Red extends Navigation_Routines {
-
-    String vuforiareading;
+    String[] vuforiareading = new String[2];
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -20,9 +17,9 @@ public class Top_Red extends Navigation_Routines {
         runtime.reset();
         lift_glyph("up");
         vuforiareading = vuforia_scan();
-        jewelknock("red");
+        jewelknockvuforia("red", vuforiareading[1], false);
 
-        if (vuforiareading == "RIGHT"){
+        if (vuforiareading[0] == "RIGHT"){
             go_forward(21, 0,.2, false);
             turn_to_heading_pirouette(127, false);
             go_forward(16.5,127,.2, false);
@@ -35,7 +32,7 @@ public class Top_Red extends Navigation_Routines {
             go_forward(2,127,-.2, true);
 
 
-        } else if (vuforiareading == "LEFT"){
+        } else if (vuforiareading[0] == "LEFT"){
             go_forward(26, 0,.2, false);
             turn_to_heading_pirouette(90, false);
             go_forward(11,90,.2, false);

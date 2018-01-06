@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.Tests;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import org.firstinspires.ftc.teamcode.Navigation_Routines;
+import org.firstinspires.ftc.teamcode.Autonomous.Navigation_Routines;
 
 /**
  * Created by Drew on 10/2/2017.

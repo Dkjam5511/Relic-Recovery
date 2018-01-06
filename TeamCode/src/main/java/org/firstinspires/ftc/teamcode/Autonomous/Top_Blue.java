@@ -1,8 +1,7 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import org.firstinspires.ftc.teamcode.Navigation_Routines;
+
 import org.firstinspires.ftc.teamcode.GlobalVarriables;
 
 /**
@@ -11,7 +10,7 @@ import org.firstinspires.ftc.teamcode.GlobalVarriables;
 @Autonomous(name = "Top_Blue", group = "Autonomous")
 public class Top_Blue extends Navigation_Routines {
 
-    String vuforiareading;
+    String[] vuforiareading = new String[2];
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -19,14 +18,9 @@ public class Top_Blue extends Navigation_Routines {
         runtime.reset();
         lift_glyph("up");
         vuforiareading = vuforia_scan();
-        jewelknock("blue");
+        jewelknockvuforia("blue", vuforiareading[1], false);
 
-        if (vuforiareading == "LEFT") {
-            /*
-            go_forward(27.5, 0,.2);
-            turn_to_heading_pirouette(223);
-            go_forward(19,223,.2);
-            */
+        if (vuforiareading[0] == "LEFT") {
             go_forward(20, 0, .2, false);
             turn_to_heading_pirouette(232 , false);
             go_forward(16, 232, .2, false);
@@ -37,7 +31,7 @@ public class Top_Blue extends Navigation_Routines {
             rightclamp.setPosition(GlobalVarriables.rightclampopen);
             sleep(1000);
             go_forward(2, 232, -.2, true);
-        } else if (vuforiareading == "RIGHT") {
+        } else if (vuforiareading[0] == "RIGHT") {
             go_forward(26, 0, .2, false);
             turn_to_heading_pirouette(270, false);
             go_forward(11, 270, .2, false);

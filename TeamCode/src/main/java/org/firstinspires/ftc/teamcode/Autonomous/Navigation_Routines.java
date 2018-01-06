@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Autonomous;
 
 
 import android.graphics.Bitmap;
@@ -17,7 +17,6 @@ import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.Vuforia;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
@@ -25,16 +24,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.teamcode.DbgLog;
+import org.firstinspires.ftc.teamcode.GlobalVarriables;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-
-import static java.lang.System.out;
 
 
 /**
@@ -68,27 +64,20 @@ public abstract class Navigation_Routines extends LinearOpMode {
 
     private double wheel_encoder_ticks = 1440;
     private double wheel_diameter = 3.5;  // size of wheels
-    private double liftencoderstartpos;
     public double ticks_per_inch = wheel_encoder_ticks / (wheel_diameter * 3.1416);
+    private double liftencoderstartpos;
 
     public ElapsedTime runtime = new ElapsedTime();
 
     public void NAV_init() {
         leftWheel = hardwareMap.dcMotor.get("left");
         rightWheel = hardwareMap.dcMotor.get("right");
-        jewelcsleft = hardwareMap.colorSensor.get("jcsl");
-        jewelcsright = hardwareMap.colorSensor.get("jcsr");
-        sidejewelcs = hardwareMap.colorSensor.get("sjcs");
         jewelservo = hardwareMap.servo.get("js");
         sidejewelservo = hardwareMap.servo.get("sjs");
         leftclamp = hardwareMap.servo.get("lc");
         rightclamp = hardwareMap.servo.get("rc");
         liftmotor = hardwareMap.dcMotor.get("lm");
         relicmotor = hardwareMap.dcMotor.get("rm");
-
-        jewelcsleft.enableLed(false);
-        jewelcsright.enableLed(false);
-        sidejewelcs.enableLed(false);
 
         jewelservo.setPosition(.6);
         sidejewelservo.setPosition(.2);
@@ -374,12 +363,15 @@ public abstract class Navigation_Routines extends LinearOpMode {
 
     } // end of go_forward
 
-    public String vuforia_scan() {
+    public String[] vuforia_scan() {
 
         DbgLog.msg("10435 Starting Vuforia_Scan");
 
         ElapsedTime vuforiascantime = new ElapsedTime();
 
+        double redcount = 0;
+        double bluecount = 0;
+        String rightjewelcolor;
         boolean picturefound = false;
 
         VuforiaTrackables relicTrackables = this.vuforia.loadTrackablesFromAsset("RelicVuMark");
@@ -389,7 +381,7 @@ public abstract class Navigation_Routines extends LinearOpMode {
         vuforiascantime.reset();
         while (opModeIsActive() && !picturefound && vuforiascantime.seconds() < 5) {
             RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
-            
+
             if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
                 picturereading = vuMark.toString();
                 telemetry.addData("Vumark visible:", picturereading);
@@ -408,7 +400,7 @@ public abstract class Navigation_Routines extends LinearOpMode {
         VuforiaLocalizer.CloseableFrame closeableframe = null;
         this.vuforia.setFrameQueueCapacity(6);
 
-        try{
+        try {
             closeableframe = this.vuforia.getFrameQueue().take();
             long numImages = closeableframe.getNumImages();
 
@@ -418,11 +410,10 @@ public abstract class Navigation_Routines extends LinearOpMode {
                     break;
                 }
             }
-        }
-        catch(InterruptedException exc){
+        } catch (InterruptedException exc) {
+            DbgLog.msg("10435 Vuforia_Scan: closeableframe exception" + exc.toString() );
             return null;
-        }
-        finally{
+        } finally {
             if (closeableframe != null) closeableframe.close();
         }
 
@@ -430,8 +421,6 @@ public abstract class Navigation_Routines extends LinearOpMode {
 
             Bitmap bm = Bitmap.createBitmap(rgbImage.getWidth(), rgbImage.getHeight(), Bitmap.Config.RGB_565);
             bm.copyPixelsFromBuffer(rgbImage.getPixels());
-            double redcount = 0;
-            double bluecount = 0;
             int bmwidth;
             int bmheight;
             int onepixel;
@@ -441,8 +430,8 @@ public abstract class Navigation_Routines extends LinearOpMode {
             bmwidth = bm.getWidth();
 
             int iheight, jwidth;
-            for (iheight = (int) (bmheight * .6); iheight < bmheight; ++iheight) {
-                for (jwidth = 0; jwidth < bmwidth * .3; ++jwidth) {
+            for (iheight = (int) (bmheight * .6); iheight < bmheight; ++iheight) {  // starting at .6 because looking at bottom 40% of image
+                for (jwidth = 0; jwidth < bmwidth * .3; ++jwidth) {  // looking at first 30% of image which is right side because image is backward
                     onepixel = bm.getPixel(jwidth, iheight);
                     redcount += Color.red(onepixel);
                     bluecount += Color.blue(onepixel);
@@ -457,6 +446,8 @@ public abstract class Navigation_Routines extends LinearOpMode {
                 out = new FileOutputStream(file);
                 bm.compress(Bitmap.CompressFormat.PNG, 100, out);
             } catch (Exception e) {
+                DbgLog.msg("10435 Vuforia_Scan: FileOutputStream exception" + e.toString() );
+
                 e.printStackTrace();
             } finally {
                 try {
@@ -464,6 +455,7 @@ public abstract class Navigation_Routines extends LinearOpMode {
                         out.close();
                     }
                 } catch (IOException e) {
+                    DbgLog.msg("10435 Vuforia_Scan: FileOutputStream close exception" + e.toString() );
                     e.printStackTrace();
                 }
             }
@@ -479,16 +471,64 @@ public abstract class Navigation_Routines extends LinearOpMode {
                     + " ImageXsize:" + Integer.toString(bm.getWidth())
                     + " ImageYsize:" + Integer.toString(bm.getHeight())
             );
-
+        } else {
+            DbgLog.msg("10435 Vuforia_Scan: rgbImage = null");
         }
+
+        if (redcount > bluecount) {
+            rightjewelcolor = "red";
+        } else {
+            rightjewelcolor = "blue";
+        }
+
+        if (redcount + bluecount == 0){
+            rightjewelcolor = "none";
+        }
+
+        String returnvalue[] = new String[2];
+        returnvalue[0] = picturereading;
+        returnvalue[1] = rightjewelcolor;
+
         telemetry.update();
-        sleep(4000);
 
         DbgLog.msg("10435 Ending Vuforia_Scan");
 
-        return picturereading;
+        return returnvalue;
     }
 
+    public void jewelknockvuforia(String RoB, String rightjewelcolor, boolean useside) {
+
+        DbgLog.msg("10435 Starting Jewel Knock Vuforia");
+        DbgLog.msg("10435 Right Jewel Color: " + rightjewelcolor);
+
+        if (rightjewelcolor != "none") {
+            if (useside) {
+                sidejewelservo.setPosition(.97);
+            } else {
+                jewelservo.setPosition(0);
+            }
+            sleep(1000);
+
+            if (RoB == "red" && rightjewelcolor == "blue" || RoB == "blue" && rightjewelcolor == "red") {
+                DbgLog.msg("10435 Jewel Knock Vuforia: Turning Left");
+                turn_to_heading(352);
+            } else if (RoB == "red" && rightjewelcolor == "red" || RoB == "blue" && rightjewelcolor == "blue") {
+                DbgLog.msg("10435 Jewel Knock Vuforia: Turning Right");
+                turn_to_heading(8);
+            }
+
+            if (useside) {
+                sidejewelservo.setPosition(.2);
+            } else {
+                jewelservo.setPosition(.6);
+            }
+            sleep(200);
+            turn_to_heading(0);
+        }
+
+        DbgLog.msg("10435 Ending Jewel Knock Vuforia");
+    }
+/*
     public void jewelknock(String RoB) {
 
         DbgLog.msg("10435 Staring JEWEL_KNOCK");
@@ -506,7 +546,6 @@ public abstract class Navigation_Routines extends LinearOpMode {
         boolean redleft;
 
         jewelservo.setPosition(0);
-
         sleep(2000);
 
         // wait up to 3 seconds for servo arm to go down and to get a color reading if we don't get a color reading then move on
@@ -626,7 +665,7 @@ public abstract class Navigation_Routines extends LinearOpMode {
         DbgLog.msg("10435 " + "Color Found: ", colorfound + "Red Reading Adjusted: ", redreadingadj + "Blue Reading Adjusted: ", bluereadingadj + "Blue Reading: ", bluereading + "Red Reading", redreading);
 
     }
-
+*/
     public void lift_glyph(String UoD) {
         final double incheslifted = 6;
         double ticksperrevlift = 560;
