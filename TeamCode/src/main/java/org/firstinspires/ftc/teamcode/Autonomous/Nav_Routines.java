@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
-
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Environment;
@@ -32,14 +31,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-
 /**
  * Created by Drew on 9/17/2017.
  * :D
  */
 
-public abstract class Navigation_Routines extends LinearOpMode {
-
+public abstract class Nav_Routines extends LinearOpMode {
     DcMotor leftWheel;
     DcMotor rightWheel;
     DcMotor liftmotor;
@@ -115,10 +112,14 @@ public abstract class Navigation_Routines extends LinearOpMode {
         parameters.cameraDirection = VuforiaLocalizer.CameraDirection.FRONT;
         this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
 
+        /*  This is instead of waitForStart so we can get telemetry if needed
         while (!isStarted()) {
             telemetry.update();
             idle();
         }
+        */
+        waitForStart();
+
     }
 
     public void turn_to_heading(double target_heading) {

@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.GlobalVarriables;
  * Created by Drew on 10/25/2017.
  */
 @Autonomous (name = "Top_Red", group = "Autonomous")
-public class Top_Red extends Navigation_Routines {
+public class Top_Red extends Nav_Routines {
     String[] vuforiareading = new String[2];
 
     @Override
@@ -49,7 +49,7 @@ public class Top_Red extends Navigation_Routines {
         } else { // center
             go_forward(26, 0,.2, false);
             turn_to_heading_pirouette(124, false);
-            go_forward(15.5,124,.2, false);
+            go_forward(16.5,124,.2, false);
             sleep(300);
             lift_glyph("down");
             sleep(500);

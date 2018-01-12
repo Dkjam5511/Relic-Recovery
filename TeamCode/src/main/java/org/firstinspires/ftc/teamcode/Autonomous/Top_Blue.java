@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.GlobalVarriables;
  * Created by Drew on 10/25/2017.
  */
 @Autonomous(name = "Top_Blue", group = "Autonomous")
-public class Top_Blue extends Navigation_Routines {
+public class Top_Blue extends Nav_Routines {
 
     String[] vuforiareading = new String[2];
 

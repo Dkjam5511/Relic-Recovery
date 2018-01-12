@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -9,7 +10,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 /**
  * Created by Drew on 10/8/2017.
  */
-@TeleOp(name = "OmniTeleOp", group = "Drive")
+@Disabled
 public class OmniTeleOp extends OpMode {
 
     DcMotor uwheel;
