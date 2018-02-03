@@ -1,28 +1,63 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.ElapsedTime;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.os.Environment;
+import android.provider.Settings;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.vuforia.Image;
+import com.vuforia.PIXEL_FORMAT;
+import com.vuforia.Vuforia;
+
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.teamcode.DbgLog;
+import org.firstinspires.ftc.teamcode.GlobalVarriables;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * Created by Drew on 1/10/2018.
  */
 
-abstract public class Mecanum_Nav_Routines extends LinearOpMode{
+abstract public class Mecanum_Nav_Routines extends LinearOpMode {
 
     DcMotor leftFront;
     DcMotor rightFront;
     DcMotor leftRear;
     DcMotor rightRear;
+    DcMotor liftmotor;
+    public Servo leftclamp;
+    public Servo rightclamp;
+    Servo leftjewelservo;
+    Servo leftjewelservoflipper;
+    Servo rightjewelservo;
+    Servo rightjewelservoflipper;
+    ModernRoboticsI2cRangeSensor rangesensor;
+    ColorSensor cs;
     BNO055IMU imu;
     Orientation angles;
+    VuforiaLocalizer vuforia;
+
+    public String picturereading = null;
 
     double gs_previous_speed;
     double gs_previous_ticks_traveled;
@@ -32,14 +67,24 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode{
     private double wheel_encoder_ticks = 537.6;
     private double wheel_diameter = 3.75;  // size of wheels
     public double ticks_per_inch = wheel_encoder_ticks / (wheel_diameter * 3.1416);
+    private double liftencoderstartpos;
 
     public ElapsedTime runtime = new ElapsedTime();
 
-    public void MNav_Init(){
+    public void MNav_Init() {
         leftFront = hardwareMap.dcMotor.get("lf");
         rightFront = hardwareMap.dcMotor.get("rf");
         leftRear = hardwareMap.dcMotor.get("lr");
         rightRear = hardwareMap.dcMotor.get("rr");
+        leftclamp = hardwareMap.servo.get("lc");
+        rightclamp = hardwareMap.servo.get("rc");
+        liftmotor = hardwareMap.dcMotor.get("lm");
+        leftjewelservo = hardwareMap.servo.get("ljs");
+        leftjewelservoflipper = hardwareMap.servo.get("ljsf");
+        rightjewelservo = hardwareMap.servo.get("rjs");
+        rightjewelservoflipper = hardwareMap.servo.get("rjsf");
+        rangesensor = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "rs");
+        cs = hardwareMap.colorSensor.get("cs");
 
         rightFront.setDirection(DcMotor.Direction.REVERSE);
         rightRear.setDirection(DcMotor.Direction.REVERSE);
@@ -48,6 +93,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode{
         leftRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightRear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        liftmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         BNO055IMU.Parameters IMUParameters = new BNO055IMU.Parameters();
         IMUParameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
@@ -57,7 +103,25 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode{
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(IMUParameters);
 
+        leftclamp.setPosition(GlobalVarriables.leftclampinit);
+        rightclamp.setPosition(GlobalVarriables.rightclampinit);
+
+        rightjewelservo.setPosition(GlobalVarriables.rightjewelservoinit);
+        leftjewelservo.setPosition(GlobalVarriables.leftjewelservoinit);
+        rightjewelservoflipper.setPosition(GlobalVarriables.rightjewelservoflipperinit);
+        leftjewelservoflipper.setPosition(GlobalVarriables.leftjewelservoflipperinit);
+
         angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+
+        liftencoderstartpos = liftmotor.getCurrentPosition();
+
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+
+        parameters.vuforiaLicenseKey = "AWaEPBn/////AAAAGWa1VK57tkUipP01PNk9ghlRuxjK1Oh1pmbHuRnpaJI0vi57dpbnIkpee7J1pQ2RIivfEFrobqblxS3dKUjRo52NMJab6Me2Yhz7ejs5SDn4G5dheW5enRNWmRBsL1n+9ica/nVjG8xvGc1bOBRsIeZyL3EZ2tKSJ407BRgMwNOmaLPBle1jxqAE+eLSoYsz/FuC1GD8c4S3luDm9Utsy/dM1W4dw0hDJFc+lve9tBKGBX0ggj6lpo9GUrTC8t19YJg58jsIXO/DiF09a5jlrTeB2LK+GndUDEGyZA1mS3yAR6aIBeDYnFw+79mVFIkTPk8wv3HIQfzoggCu0AwWJBVUVjkDxJOWfzCGjaHylZlo";
+
+        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.FRONT;
+        this.vuforia = ClassFactory.createVuforiaLocalizer(parameters);
 
         waitForStart();
     }
@@ -87,7 +151,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode{
 
 //            wheel_power = (Math.pow((degrees_to_turn + 5) / 40, 2) + 2) / 100;
 
-            wheel_power = (2 * Math.pow((degrees_to_turn + 13) / 23, 2) + 10) / 100;
+            wheel_power = (2 * Math.pow((degrees_to_turn + 13) / 30, 2) + 15) / 100;
 
             if (go_right) {
                 wheel_power = -wheel_power;
@@ -127,6 +191,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode{
         DbgLog.msg("10435 ending TURN_TO_HEADING" + Double.toString(target_heading) + "  Final heading:" + Double.toString(current_heading) + "  After set power 0:" + Double.toString(angles.firstAngle));
 
     } // end of turn_to_heading
+
     public void turn_to_heading_pirouette(double target_heading, boolean go_backwards) {
         boolean go_right;
         double current_heading;
@@ -155,25 +220,25 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode{
 
             if (!go_right) {
                 if (go_backwards) {
-                    leftRear.setPower(-wheel_power*.8);
-                    leftFront.setPower(-wheel_power*1.4);
+                    leftRear.setPower(-wheel_power * .8);
+                    leftFront.setPower(-wheel_power * 1.4);
                     rightFront.setPower(wheel_power);
                     rightRear.setPower(0);
                 } else {
-                    rightRear.setPower(wheel_power*.8);
-                    rightFront.setPower(wheel_power*1.4);
+                    rightRear.setPower(wheel_power * .8);
+                    rightFront.setPower(wheel_power * 1.4);
                     leftFront.setPower(-wheel_power);
                     leftRear.setPower(0);
                 }
             } else {
                 if (go_backwards) {
-                    rightRear.setPower(-wheel_power*.8);
-                    rightFront.setPower(-wheel_power*1.4);
+                    rightRear.setPower(-wheel_power * .8);
+                    rightFront.setPower(-wheel_power * 1.4);
                     leftFront.setPower(wheel_power);
                     leftRear.setPower(0);
                 } else {
-                    leftRear.setPower(wheel_power*.8);
-                    leftFront.setPower(wheel_power*1.4);
+                    leftRear.setPower(wheel_power * .8);
+                    leftFront.setPower(wheel_power * 1.4);
                     rightFront.setPower(-wheel_power);
                     rightRear.setPower(-0);
                 }
@@ -219,7 +284,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode{
         boolean runtimereached = false;
         double speed_increase = .05;
         double actual_speed;
-        double lagreduction = 1.125;
+        double lagreduction = 2.125;
         int start_position_l_Front;
         int start_position_l_Rear;
         int start_position_r_Front;
@@ -333,6 +398,382 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode{
 
     } // end of go_forward
 
+    public void go_sideways(String RoB, double angledegrees, double heading, double power, double maxtime, double walldistance) {
+
+        DbgLog.msg("10435 Starting go_sideways"
+                + " angledegrees:" + Double.toString(angledegrees)
+                + " heading:" + Double.toString(heading)
+                + " power:" + Double.toString(power)
+                + " maxtime:" + Double.toString(maxtime)
+        );
+
+        ElapsedTime timerun = new ElapsedTime();
+        double stickpower = power;
+        double angleradians;
+        double leftfrontpower;
+        double rightfrontpower;
+        double leftrearpower;
+        double rightrearpower;
+        double turningpower = 0;
+        double inchesreadfromwall;
+        double poweradjustment = 0;
+        double walldistancesensitivity = 3;
+        double colorreading;
+
+        boolean colorfound = false;
+
+
+        // For the cos and sin calculations below, angleradians = 0 is straight to the right. 180 is stright to the left. Negative numbers up to -180 are backward postive numbers up to 180 are forward
+        // We subtract 90 from it because our robot code thinks of 0 as forward.
+        if (angledegrees < 270) {
+            angleradians = ((angledegrees - 90) * -1) * Math.PI / 180;
+        } else {
+            angleradians = (450 - angledegrees) * Math.PI / 180;
+        }
+
+        angleradians = angleradians - Math.PI / 4; //adjust by 45 degrees for the mecanum wheel calculations below
+
+        while (timerun.seconds() < maxtime && runtime.seconds() < 26 && opModeIsActive() && !colorfound) {
+
+            inchesreadfromwall = rangesensorreading();
+            if (RoB == "red" | RoB == "blue") {
+                if (RoB == "red") {
+                    colorreading = cs.red();
+                } else {
+                    colorreading = cs.blue();
+                }
+                if (colorreading >= 29 && RoB == "red") {
+                    colorfound = true;
+                } else if (colorreading >= 16 && RoB == "blue") {
+                    colorfound = true;
+                }
+            }
+
+            if (Math.abs(walldistance - inchesreadfromwall) < .4) {
+                walldistancesensitivity = 1.5;
+            }
+
+            if (walldistance > 0 && (Math.abs(walldistance - inchesreadfromwall) < walldistancesensitivity)) {
+                poweradjustment = (inchesreadfromwall - walldistance) / 30;
+            } else {
+                poweradjustment = 0;
+            }
+
+            if (walldistance - inchesreadfromwall > 5) { // In case something unexpected gets in front of the range sensor
+                poweradjustment = 0;
+            }
+
+            turningpower = -go_straight_adjustment(heading) * .6;
+
+            leftfrontpower = stickpower * Math.cos(angleradians) + turningpower + poweradjustment;
+            rightfrontpower = stickpower * Math.sin(angleradians) - turningpower + poweradjustment;
+            leftrearpower = stickpower * Math.sin(angleradians) + turningpower + poweradjustment;
+            rightrearpower = stickpower * Math.cos(angleradians) - turningpower + poweradjustment;
+
+            leftFront.setPower(leftfrontpower);
+            rightFront.setPower(rightfrontpower);
+            leftRear.setPower(leftrearpower);
+            rightRear.setPower(rightrearpower);
+
+            telemetry.addData("Inches Read From Wall", inchesreadfromwall);
+            telemetry.addData("Wall Distance", walldistance);
+            telemetry.addData("Power Adjustment", poweradjustment);
+            telemetry.update();
+
+
+            DbgLog.msg("10435 inchesreadfromwall:" + Double.toString(inchesreadfromwall)
+                    + " walldistance:" + Double.toString(walldistance)
+                    + " poweradjustment:" + Double.toString(poweradjustment)
+            );
+
+        }
+
+        leftFront.setPower(0);
+        rightFront.setPower(0);
+        leftRear.setPower(0);
+        rightRear.setPower(0);
+
+        sleep(1000);
+    }
+
+    public void wall_distance_align(double walldistance) {
+
+        ElapsedTime timeouttimer = new ElapsedTime();
+
+        double inchesreadfromwall;
+        double poweradjustment;
+        boolean tooclose = false;
+
+        inchesreadfromwall = rangesensorreading();
+
+        timeouttimer.reset();
+
+        while (Math.abs(walldistance - inchesreadfromwall) > .5 && timeouttimer.seconds() < 2 && !tooclose && opModeIsActive()) {
+            inchesreadfromwall = rangesensorreading();
+            poweradjustment = (inchesreadfromwall - walldistance) / 11;
+
+            if (walldistance - inchesreadfromwall > 5) {
+                tooclose = true;
+            }
+
+            leftFront.setPower(poweradjustment);
+            rightFront.setPower(poweradjustment);
+            leftRear.setPower(poweradjustment);
+            rightRear.setPower(poweradjustment);
+        }
+
+        leftFront.setPower(0);
+        rightFront.setPower(0);
+        leftRear.setPower(0);
+        rightRear.setPower(0);
+
+    }
+
+    public String[] vuforia_scan() {
+
+        DbgLog.msg("10435 Starting Vuforia_Scan");
+
+        ElapsedTime vuforiascantime = new ElapsedTime();
+
+        double redcount = 0;
+        double bluecount = 0;
+        String rightjewelcolor;
+        boolean picturefound = false;
+
+        VuforiaTrackables relicTrackables = this.vuforia.loadTrackablesFromAsset("RelicVuMark");
+        VuforiaTrackable relicTemplate = relicTrackables.get(0);
+        relicTrackables.activate();
+
+        vuforiascantime.reset();
+        while (opModeIsActive() && !picturefound && vuforiascantime.seconds() < 5) {
+            RelicRecoveryVuMark vuMark = RelicRecoveryVuMark.from(relicTemplate);
+
+            if (vuMark != RelicRecoveryVuMark.UNKNOWN) {
+                picturereading = vuMark.toString();
+                telemetry.addData("Vumark visible:", picturereading);
+                picturefound = true;
+            } else {
+                telemetry.addLine("VuMark not visible");
+            }
+            telemetry.update();
+        }
+
+        DbgLog.msg("10435 Vuforia_Scan: " + "picturereading:" + picturereading);
+
+        Image rgbImage = null;
+
+        Vuforia.setFrameFormat(PIXEL_FORMAT.RGB565, true);
+        VuforiaLocalizer.CloseableFrame closeableframe = null;
+        this.vuforia.setFrameQueueCapacity(6);
+
+        try {
+            closeableframe = this.vuforia.getFrameQueue().take();
+            long numImages = closeableframe.getNumImages();
+
+            for (int i = 0; i < numImages; i++) {
+                if (closeableframe.getImage(i).getFormat() == PIXEL_FORMAT.RGB565) {
+                    rgbImage = closeableframe.getImage(i);
+                    if (rgbImage != null) {
+                        break;
+                    }
+                }
+            }
+        } catch (InterruptedException exc) {
+            DbgLog.msg("10435 Vuforia_Scan: closeableframe exception" + exc.toString());
+            return null;
+        } finally {
+            if (closeableframe != null) closeableframe.close();
+        }
+
+        if (rgbImage != null) {
+
+            // copy the bitmap from the Vuforia frame
+            Bitmap croppedbm = Bitmap.createBitmap(rgbImage.getWidth(), rgbImage.getHeight(), Bitmap.Config.RGB_565);
+            croppedbm.copyPixelsFromBuffer(rgbImage.getPixels());
+
+            //saves the bitmap as a file
+            String path = Environment.getExternalStorageDirectory().toString();
+            FileOutputStream out = null;
+            try {
+                File file = new File(path, "Bitmap.png");
+                out = new FileOutputStream(file);
+                croppedbm.compress(Bitmap.CompressFormat.PNG, 100, out);
+            } catch (Exception e) {
+                DbgLog.msg("10435 Vuforia_Scan: FileOutputStream exception" + e.toString());
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (out != null) {
+                        out.close();
+                    }
+                } catch (IOException e) {
+                    DbgLog.msg("10435 Vuforia_Scan: FileOutputStream close exception" + e.toString());
+                    e.printStackTrace();
+                }
+            }
+
+            DbgLog.msg("10435 Vuforia_Scan:"
+                    + " Original Width:" + Integer.toString(croppedbm.getWidth())
+                    + " Original Height:" + Integer.toString(croppedbm.getHeight()));
+
+            //** rotate 90 degrees **//
+            //Matrix matrix = new Matrix();
+            //matrix.postRotate(90);
+            //bm = Bitmap.createBitmap(bm, 0, 0, bmwidth, bmheight, matrix, true);
+
+            // Crop the image
+            int croppedwidth = 400;
+            int croppedheight = 360;
+            int croppedxstart = croppedbm.getWidth() - croppedwidth;
+            // Ok now do the cropping, and put it back in same buffer.
+            // The image is rotated 90 to the left and 0,0 is the upper left
+            croppedbm = Bitmap.createBitmap(croppedbm, croppedxstart, 0, croppedwidth, croppedheight);
+
+            // Add up the red and blue in the pixels
+            int onepixel;
+            int iheight, jwidth;
+            for (iheight = 0; iheight < croppedheight; ++iheight) {
+                for (jwidth = 0; jwidth < croppedwidth; ++jwidth) {
+                    onepixel = croppedbm.getPixel(jwidth, iheight);
+                    redcount += Color.red(onepixel);
+                    bluecount += Color.blue(onepixel);
+                }
+            }
+
+            //saves the bitmap as a file
+            try {
+                File file = new File(path, "CroppedBitmap.png");
+                out = new FileOutputStream(file);
+                croppedbm.compress(Bitmap.CompressFormat.PNG, 100, out);
+            } catch (Exception e) {
+                DbgLog.msg("10435 Vuforia_Scan: FileOutputStream exception" + e.toString());
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (out != null) {
+                        out.close();
+                    }
+                } catch (IOException e) {
+                    DbgLog.msg("10435 Vuforia_Scan: FileOutputStream close exception" + e.toString());
+                    e.printStackTrace();
+                }
+            }
+
+            int redbluediv = 100000;
+            redcount = redcount / redbluediv;
+            bluecount = bluecount / redbluediv;
+            telemetry.addData("Red count:", redcount);
+            telemetry.addData("Blue count:", bluecount);
+            DbgLog.msg("10435 Vuforia_Scan:"
+                    + " Red Count:" + Double.toString(redcount)
+                    + " Blue Count:" + Double.toString(bluecount)
+                    + " Cropped Width:" + Integer.toString(croppedbm.getWidth())
+                    + " Cropped Height:" + Integer.toString(croppedbm.getHeight())
+            );
+        } else {
+            DbgLog.msg("10435 Vuforia_Scan: Vuforia failure - rgbImage = null");
+        }
+
+        if (redcount > bluecount) {
+            rightjewelcolor = "red";
+        } else {
+            rightjewelcolor = "blue";
+        }
+
+        if (redcount + bluecount == 0) {
+            rightjewelcolor = "none";
+        }
+
+        String returnvalue[] = new String[2];
+        returnvalue[0] = picturereading;
+        returnvalue[1] = rightjewelcolor;
+
+        telemetry.update();
+
+        DbgLog.msg("10435 Ending Vuforia_Scan");
+
+        return returnvalue;
+    }
+
+    public void lift_glyph(String UoD, double inchestolift, boolean doclamp) {
+        double ticksperrevlift = 560;
+        double inchesperrevlift = 5.375;
+        double ticksperinchlift = ticksperrevlift / inchesperrevlift;
+        double liftencoderpos;
+        double lifttargetpos = 0;
+
+        if (doclamp) {
+            leftclamp.setPosition(GlobalVarriables.leftclampclosed);
+            rightclamp.setPosition(GlobalVarriables.rightclampclosed);
+            sleep(1200);
+        }
+
+        lifttargetpos = inchestolift * ticksperinchlift;
+        liftencoderpos = liftmotor.getCurrentPosition() - liftencoderstartpos;
+
+        if (UoD == "down") {
+            while (lifttargetpos < liftencoderpos - 40 && opModeIsActive()) {
+                liftencoderpos = liftmotor.getCurrentPosition() - liftencoderstartpos;
+                if (liftencoderpos - lifttargetpos > 120) {
+                    liftmotor.setPower(-.8);
+                } else {
+                    liftmotor.setPower(-.3);
+                }
+            }
+        } else if (UoD == "up") {
+            while (lifttargetpos > liftencoderpos + 40 && opModeIsActive()) {
+                liftencoderpos = liftmotor.getCurrentPosition() - liftencoderstartpos;
+                if (lifttargetpos - liftencoderpos > 120) {
+                    liftmotor.setPower(1);
+                } else {
+                    liftmotor.setPower(.6);
+                }
+            }
+        }
+        liftmotor.setPower(0);
+    }
+
+    public void jewelknockvuforia(String RoB, String rightjewelcolor, boolean useright) {
+
+        DbgLog.msg("10435 Starting Jewel Knock Vuforia");
+        DbgLog.msg("10435 Right Jewel Color: " + rightjewelcolor);
+
+        if (rightjewelcolor != "none") {
+            if (useright) {
+                rightjewelservo.setPosition(.15);
+            } else {
+                leftjewelservo.setPosition(.85);
+            }
+            sleep(1000);
+
+            if (RoB == "red" && rightjewelcolor == "blue" || RoB == "blue" && rightjewelcolor == "red") {
+                DbgLog.msg("10435 Jewel Knock Vuforia: Hitting Left");
+                if (useright) {
+                    rightjewelservoflipper.setPosition(GlobalVarriables.rightjewelservoflipperinit - GlobalVarriables.jewelflipperswing);
+                } else {
+                    leftjewelservoflipper.setPosition(GlobalVarriables.leftjewelservoflipperinit - GlobalVarriables.jewelflipperswing);
+                }
+            } else if (RoB == "red" && rightjewelcolor == "red" || RoB == "blue" && rightjewelcolor == "blue") {
+                DbgLog.msg("10435 Jewel Knock Vuforia: Hitting Right");
+                if (useright) {
+                    rightjewelservoflipper.setPosition(GlobalVarriables.rightjewelservoflipperinit + GlobalVarriables.jewelflipperswing);
+                } else {
+                    leftjewelservoflipper.setPosition(GlobalVarriables.leftjewelservoflipperinit + GlobalVarriables.jewelflipperswing);
+                }
+            }
+
+            sleep(1000);
+            rightjewelservoflipper.setPosition(GlobalVarriables.rightjewelservoflipperinit);
+            leftjewelservoflipper.setPosition(GlobalVarriables.leftjewelservoflipperinit);
+            rightjewelservo.setPosition(GlobalVarriables.rightjewelservoinit);
+            leftjewelservo.setPosition(GlobalVarriables.leftjewelservoinit);
+            sleep(200);
+
+        }
+
+        DbgLog.msg("10435 Ending Jewel Knock Vuforia");
+    }
+
     private double getSpeed(double ticks_traveled) {
         double new_speed;
 
@@ -406,5 +847,13 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode{
 
         return current_heading;
     }
+
+    private double rangesensorreading() {
+        double inchesfound;
+        inchesfound = rangesensor.getDistance(DistanceUnit.INCH);
+
+        return inchesfound;
+    }
+
 }
 

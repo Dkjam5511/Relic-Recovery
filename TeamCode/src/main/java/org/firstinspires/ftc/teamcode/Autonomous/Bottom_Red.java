@@ -1,13 +1,14 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.GlobalVarriables;
 
 /**
  * Created by Drew on 10/25/2017.
  */
-@Autonomous(name = "Bottom_Red", group = "Autonomous")
+@Disabled
 public class Bottom_Red extends Nav_Routines {
 
     String[] vuforiareading = new String[2];

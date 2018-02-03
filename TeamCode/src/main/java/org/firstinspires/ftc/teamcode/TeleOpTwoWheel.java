@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import android.provider.Settings;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -13,8 +14,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 /**
  * Created by zandr on 9/25/2017.
  */
-@TeleOp(name = "TeleOp", group = "Drive")
-public class TeleOp_Current extends OpMode {
+@Disabled
+public class TeleOpTwoWheel extends OpMode {
 
     DcMotor leftwheel;
     DcMotor rightwheel;
