@@ -418,13 +418,17 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
         double inchesreadfromwall;
         double poweradjustment = 0;
         double walldistancesensitivity = 3;
-        double colorreading;
+        double colorreading = 0;
 
         boolean colorfound = false;
 
 
-        // For the cos and sin calculations below, angleradians = 0 is straight to the right. 180 is stright to the left. Negative numbers up to -180 are backward postive numbers up to 180 are forward
-        // We subtract 90 from it because our robot code thinks of 0 as forward.
+        // For the cos and sin calculations below in the mecanum power calcs, angleradians = 0 is straight to the right and 180 is straight to the left.
+        // Negative numbers up to -180 are backward.  Postive numbers up to 180 are forward.
+        // We subtract 90 from it then convert degrees to radians because *our* robot code thinks of 0 degrees as forward, 90 as right, 180 as backward, 270 as left.
+
+        // This converts from *our* degrees to radians used by the mecanum power calcs.
+        // Upper left quadrant (degrees > 270) is special because in that quadrant as our degrees goes up, radians goes down.
         if (angledegrees < 270) {
             angleradians = ((angledegrees - 90) * -1) * Math.PI / 180;
         } else {
@@ -459,10 +463,6 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
                 poweradjustment = 0;
             }
 
-            if (walldistance - inchesreadfromwall > 5) { // In case something unexpected gets in front of the range sensor
-                poweradjustment = 0;
-            }
-
             turningpower = -go_straight_adjustment(heading) * .6;
 
             leftfrontpower = stickpower * Math.cos(angleradians) + turningpower + poweradjustment;
@@ -476,10 +476,10 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
             rightRear.setPower(rightrearpower);
 
             telemetry.addData("Inches Read From Wall", inchesreadfromwall);
+            telemetry.addData("Color Reading", colorreading);
             telemetry.addData("Wall Distance", walldistance);
             telemetry.addData("Power Adjustment", poweradjustment);
             telemetry.update();
-
 
             DbgLog.msg("10435 inchesreadfromwall:" + Double.toString(inchesreadfromwall)
                     + " walldistance:" + Double.toString(walldistance)
@@ -498,6 +498,8 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
 
     public void wall_distance_align(double walldistance) {
 
+        DbgLog.msg("10435 Starting Wall Distance Align");
+
         ElapsedTime timeouttimer = new ElapsedTime();
 
         double inchesreadfromwall;
@@ -510,11 +512,19 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
 
         while (Math.abs(walldistance - inchesreadfromwall) > .5 && timeouttimer.seconds() < 2 && !tooclose && opModeIsActive()) {
             inchesreadfromwall = rangesensorreading();
-            poweradjustment = (inchesreadfromwall - walldistance) / 11;
+            poweradjustment = (Math.pow(Math.abs(inchesreadfromwall - walldistance) / 9, 3) + 15) / 100;
+            if (inchesreadfromwall - walldistance < 0){
+                poweradjustment = -poweradjustment;
+            }
 
             if (walldistance - inchesreadfromwall > 5) {
                 tooclose = true;
             }
+
+            DbgLog.msg("10435 Wall Distance Align:"
+                    + " Inches Read From Wall:" + Double.toString(inchesreadfromwall)
+                    + " poweradjustment:" + Double.toString(poweradjustment)
+            );
 
             leftFront.setPower(poweradjustment);
             rightFront.setPower(poweradjustment);
@@ -590,7 +600,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
             // copy the bitmap from the Vuforia frame
             Bitmap croppedbm = Bitmap.createBitmap(rgbImage.getWidth(), rgbImage.getHeight(), Bitmap.Config.RGB_565);
             croppedbm.copyPixelsFromBuffer(rgbImage.getPixels());
-
+/*
             //saves the bitmap as a file
             String path = Environment.getExternalStorageDirectory().toString();
             FileOutputStream out = null;
@@ -611,7 +621,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
                     e.printStackTrace();
                 }
             }
-
+*/
             DbgLog.msg("10435 Vuforia_Scan:"
                     + " Original Width:" + Integer.toString(croppedbm.getWidth())
                     + " Original Height:" + Integer.toString(croppedbm.getHeight()));
@@ -639,7 +649,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
                     bluecount += Color.blue(onepixel);
                 }
             }
-
+/*
             //saves the bitmap as a file
             try {
                 File file = new File(path, "CroppedBitmap.png");
@@ -658,7 +668,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
                     e.printStackTrace();
                 }
             }
-
+*/
             int redbluediv = 100000;
             redcount = redcount / redbluediv;
             bluecount = bluecount / redbluediv;

@@ -16,7 +16,7 @@ public class Top_Red_Mecanum extends Mecanum_Nav_Routines {
     public void runOpMode() throws InterruptedException {
         MNav_Init();
         runtime.reset();
-        lift_glyph("up", 5, true);
+        lift_glyph("up", 5.5, true);
         vuforiareading = vuforia_scan();
         jewelknockvuforia("red", vuforiareading[1], true);
 
@@ -27,7 +27,7 @@ public class Top_Red_Mecanum extends Mecanum_Nav_Routines {
         go_sideways("red", 270, 0, .27, 10, 16);
 
         if (vuforiareading[0] == "LEFT") {
-            go_sideways(null, 270, 0, .27, 1.6, 0);
+            go_sideways(null, 270, 0, .27, 1.7, 0);
 
         } else if (vuforiareading[0] == "RIGHT") {
             go_sideways(null, 90, 0, .27, 1.5, 0);

@@ -16,7 +16,7 @@ public class Top_Blue_Mecanum extends Mecanum_Nav_Routines {
     public void runOpMode() throws InterruptedException {
         MNav_Init();
         runtime.reset();
-        lift_glyph("up", 5, true);
+        lift_glyph("up", 5.5, true);
         vuforiareading = vuforia_scan();
         jewelknockvuforia("blue", vuforiareading[1], false);
 
@@ -29,7 +29,7 @@ public class Top_Blue_Mecanum extends Mecanum_Nav_Routines {
         if (vuforiareading[0] == "LEFT") {
             go_sideways(null, 270, 0, .27, 1.5, 0);
         } else if (vuforiareading[0] == "RIGHT") {
-            go_sideways(null, 90, 0, .27, 1.6, 0);
+            go_sideways(null, 90, 0, .27, 1.7, 0);
         } else {
             go_sideways(null, 90, 0, .27, .2, 0);
         }
