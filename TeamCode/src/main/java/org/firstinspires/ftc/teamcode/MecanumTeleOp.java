@@ -262,18 +262,23 @@ public class MecanumTeleOp extends OpMode {
         } else {
             if (gamepad2.dpad_up) {
                 relicjawangle.setPosition(1);
+                relicjawanglepos = 1;
             }
             if (gamepad2.y) {
                 relicjawangle.setPosition(.45);
+                relicjawanglepos = .45;
             }
             if (gamepad2.x) {
                 relicjawangle.setPosition(.4);
+                relicjawanglepos = .4;
             }
             if (gamepad2.a) {
                 relicjawangle.setPosition(.35);
+                relicjawanglepos = .35;
             }
             if (gamepad1.y) {
                 relicjawangle.setPosition(0);
+                relicjawanglepos = 0;
             }
         }
         // Lift
