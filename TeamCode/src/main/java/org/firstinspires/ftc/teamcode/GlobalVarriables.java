@@ -6,12 +6,12 @@ package org.firstinspires.ftc.teamcode;
 
 public class GlobalVarriables {
     // Glyph Clamps
-    public static final double rightclampopen = .5;
-    public static final double rightclampclosed = 0;
-    public static final double rightclampinit = 1;
-    public static final double leftclampopen = .5;
-    public static final double leftclampclosed = 1;
-    public static final double leftclampinit = 0;
+    public static final double rightclampopenpos = .5;
+    public static final double rightclampclosedpos = 0;
+    public static final double rightclampinitpos = 1;
+    public static final double leftclampopenpos = .5;
+    public static final double leftclampclosedpos = 1;
+    public static final double leftclampinitpos = 0;
 
     //Jewel Arms
     public static final double jewelflipperswing = .1;

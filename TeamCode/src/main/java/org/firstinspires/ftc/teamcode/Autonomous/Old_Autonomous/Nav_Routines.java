@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Autonomous;
+package org.firstinspires.ftc.teamcode.Autonomous.Old_Autonomous;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -79,8 +79,8 @@ public abstract class Nav_Routines extends LinearOpMode {
         jewelservo.setPosition(.6);
         sidejewelservo.setPosition(.2);
 
-        leftclamp.setPosition(GlobalVarriables.leftclampinit);
-        rightclamp.setPosition(GlobalVarriables.rightclampinit);
+        leftclamp.setPosition(GlobalVarriables.leftclampinitpos);
+        rightclamp.setPosition(GlobalVarriables.rightclampinitpos);
 
         rightWheel.setDirection(DcMotorSimple.Direction.FORWARD);
         leftWheel.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -678,8 +678,8 @@ public abstract class Nav_Routines extends LinearOpMode {
         sleep(200);
 
         if (UoD == "up") {
-            leftclamp.setPosition(GlobalVarriables.leftclampclosed);
-            rightclamp.setPosition(GlobalVarriables.rightclampclosed);
+            leftclamp.setPosition(GlobalVarriables.leftclampclosedpos);
+            rightclamp.setPosition(GlobalVarriables.rightclampclosedpos);
             sleep(2000);
             lifttargetpos = incheslifted * ticksperinchlift;
         } else if (UoD == "down") {

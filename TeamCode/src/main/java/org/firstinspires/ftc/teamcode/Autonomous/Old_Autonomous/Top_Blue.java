@@ -1,6 +1,5 @@
-package org.firstinspires.ftc.teamcode.Autonomous;
+package org.firstinspires.ftc.teamcode.Autonomous.Old_Autonomous;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.GlobalVarriables;
@@ -28,8 +27,8 @@ public class Top_Blue extends Nav_Routines {
             sleep(300);
             lift_glyph("down");
             sleep(500);
-            leftclamp.setPosition(GlobalVarriables.leftclampopen);
-            rightclamp.setPosition(GlobalVarriables.rightclampopen);
+            leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
+            rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
             sleep(1000);
             go_forward(2, 232, -.2, true);
         } else if (vuforiareading[0] == "RIGHT") {
@@ -41,8 +40,8 @@ public class Top_Blue extends Nav_Routines {
             sleep(300);
             lift_glyph("down");
             sleep(500);
-            leftclamp.setPosition(GlobalVarriables.leftclampopen);
-            rightclamp.setPosition(GlobalVarriables.rightclampopen);
+            leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
+            rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
             sleep(1000);
             go_forward(2, 240, -.2, true);
 
@@ -53,8 +52,8 @@ public class Top_Blue extends Nav_Routines {
             sleep(300);
             lift_glyph("down");
             sleep(500);
-            leftclamp.setPosition(GlobalVarriables.leftclampopen);
-            rightclamp.setPosition(GlobalVarriables.rightclampopen);
+            leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
+            rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
             sleep(1000);
             go_forward(2, 236, -.2, true);
         }

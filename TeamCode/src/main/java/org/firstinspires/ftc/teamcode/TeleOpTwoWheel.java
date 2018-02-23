@@ -110,8 +110,8 @@ public class TeleOpTwoWheel extends OpMode {
 
         //Initializing Positions
 
-        rightclamp.setPosition(GlobalVarriables.rightclampinit);
-        leftclamp.setPosition(GlobalVarriables.leftclampinit);
+        rightclamp.setPosition(GlobalVarriables.rightclampinitpos);
+        leftclamp.setPosition(GlobalVarriables.leftclampinitpos);
 
         jewelservo.setPosition(.6);
         sidejewelservo.setPosition(.2);
@@ -289,19 +289,19 @@ public class TeleOpTwoWheel extends OpMode {
         }
 
         if (leftclampsetting == 2) {
-            leftclamp.setPosition(GlobalVarriables.leftclampinit);
+            leftclamp.setPosition(GlobalVarriables.leftclampinitpos);
         } else if (leftclampsetting == 1) {
-            leftclamp.setPosition(GlobalVarriables.leftclampopen);
+            leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
         } else if (leftclampsetting == 0){
-            leftclamp.setPosition(GlobalVarriables.leftclampclosed);
+            leftclamp.setPosition(GlobalVarriables.leftclampclosedpos);
         }
 
         if (rightclampsetting == 2) {
-            rightclamp.setPosition(GlobalVarriables.rightclampinit);
+            rightclamp.setPosition(GlobalVarriables.rightclampinitpos);
         } else if (rightclampsetting == 1) {
-            rightclamp.setPosition(GlobalVarriables.rightclampopen);
+            rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
         } else if (rightclampsetting == 0){
-            rightclamp.setPosition(GlobalVarriables.rightclampclosed);
+            rightclamp.setPosition(GlobalVarriables.rightclampclosedpos);
         }
 
 

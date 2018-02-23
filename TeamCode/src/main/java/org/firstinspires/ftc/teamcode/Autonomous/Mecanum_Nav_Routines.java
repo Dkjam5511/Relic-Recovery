@@ -51,6 +51,8 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
     Servo leftjewelservoflipper;
     Servo rightjewelservo;
     Servo rightjewelservoflipper;
+    Servo leftglyphwheel;
+    Servo rightglyphwheel;
     ModernRoboticsI2cRangeSensor rangesensor;
     ColorSensor cs;
     BNO055IMU imu;
@@ -83,6 +85,8 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
         leftjewelservoflipper = hardwareMap.servo.get("ljsf");
         rightjewelservo = hardwareMap.servo.get("rjs");
         rightjewelservoflipper = hardwareMap.servo.get("rjsf");
+        leftglyphwheel = hardwareMap.servo.get("lgw");
+        rightglyphwheel = hardwareMap.servo.get("rgw");
         rangesensor = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "rs");
         cs = hardwareMap.colorSensor.get("cs");
 
@@ -103,8 +107,8 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(IMUParameters);
 
-        leftclamp.setPosition(GlobalVarriables.leftclampinit);
-        rightclamp.setPosition(GlobalVarriables.rightclampinit);
+        leftclamp.setPosition(GlobalVarriables.leftclampinitpos);
+        rightclamp.setPosition(GlobalVarriables.rightclampinitpos);
 
         rightjewelservo.setPosition(GlobalVarriables.rightjewelservoinit);
         leftjewelservo.setPosition(GlobalVarriables.leftjewelservoinit);
@@ -448,7 +452,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
                 }
                 if (colorreading >= 29 && RoB == "red") {
                     colorfound = true;
-                } else if (colorreading >= 16 && RoB == "blue") {
+                } else if (colorreading >= 17 && RoB == "blue") {
                     colorfound = true;
                 }
             }
@@ -484,6 +488,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
             DbgLog.msg("10435 inchesreadfromwall:" + Double.toString(inchesreadfromwall)
                     + " walldistance:" + Double.toString(walldistance)
                     + " poweradjustment:" + Double.toString(poweradjustment)
+                    + "color reading" + Double.toString(colorreading)
             );
 
         }
@@ -713,8 +718,8 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
         double lifttargetpos = 0;
 
         if (doclamp) {
-            leftclamp.setPosition(GlobalVarriables.leftclampclosed);
-            rightclamp.setPosition(GlobalVarriables.rightclampclosed);
+            leftclamp.setPosition(GlobalVarriables.leftclampclosedpos);
+            rightclamp.setPosition(GlobalVarriables.rightclampclosedpos);
             sleep(1200);
         }
 
@@ -750,11 +755,11 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
 
         if (rightjewelcolor != "none") {
             if (useright) {
-                rightjewelservo.setPosition(.15);
+                rightjewelservo.setPosition(.17);
             } else {
-                leftjewelservo.setPosition(.85);
+                leftjewelservo.setPosition(.83);
             }
-            sleep(1000);
+            sleep(700);
 
             if (RoB == "red" && rightjewelcolor == "blue" || RoB == "blue" && rightjewelcolor == "red") {
                 DbgLog.msg("10435 Jewel Knock Vuforia: Hitting Left");
@@ -772,16 +777,31 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
                 }
             }
 
-            sleep(1000);
-            rightjewelservoflipper.setPosition(GlobalVarriables.rightjewelservoflipperinit);
-            leftjewelservoflipper.setPosition(GlobalVarriables.leftjewelservoflipperinit);
+            sleep(700);
             rightjewelservo.setPosition(GlobalVarriables.rightjewelservoinit);
             leftjewelservo.setPosition(GlobalVarriables.leftjewelservoinit);
+            rightjewelservoflipper.setPosition(GlobalVarriables.rightjewelservoflipperinit);
+            leftjewelservoflipper.setPosition(GlobalVarriables.leftjewelservoflipperinit);
             sleep(200);
 
         }
 
         DbgLog.msg("10435 Ending Jewel Knock Vuforia");
+    }
+
+    public void setwheelintake(boolean in, boolean on){
+        if (on) {
+            if (in) {
+                leftglyphwheel.setPosition(1);
+                rightglyphwheel.setPosition(0);
+            } else {
+                leftglyphwheel.setPosition(0);
+                rightglyphwheel.setPosition(1);
+            }
+        } else {
+            leftglyphwheel.setPosition(.5);
+            rightglyphwheel.setPosition(.5);
+        }
     }
 
     private double getSpeed(double ticks_traveled) {

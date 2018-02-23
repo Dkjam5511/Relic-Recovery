@@ -20,16 +20,16 @@ public class Top_Blue_Mecanum extends Mecanum_Nav_Routines {
         vuforiareading = vuforia_scan();
         jewelknockvuforia("blue", vuforiareading[1], false);
 
-        go_forward(22, 0, .12, false);
+        go_forward(24, 0, .12, false);
         lift_glyph("up", 15, false);
-        go_sideways(null, 270, 0, .27, 2, 0);
+        go_sideways(null, 270, 0, .27, 2.5, 0);
         sleep(500);
         go_sideways("blue", 90, 0, .27, 10, 16);
 
         if (vuforiareading[0] == "LEFT") {
-            go_sideways(null, 270, 0, .27, 1.5, 0);
+            go_sideways(null, 270, 0, .27, 2, 0);
         } else if (vuforiareading[0] == "RIGHT") {
-            go_sideways(null, 90, 0, .27, 1.7, 0);
+            go_sideways(null, 90, 0, .27, 2.2, 0);
         } else {
             go_sideways(null, 90, 0, .27, .2, 0);
         }
@@ -38,8 +38,8 @@ public class Top_Blue_Mecanum extends Mecanum_Nav_Routines {
         sleep(300);
         lift_glyph("down", 0, false);
         sleep(500);
-        leftclamp.setPosition(GlobalVarriables.leftclampopen);
-        rightclamp.setPosition(GlobalVarriables.rightclampopen);
+        leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
+        rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
         sleep(1000);
         go_forward(4, 0, -.2, true);
     }

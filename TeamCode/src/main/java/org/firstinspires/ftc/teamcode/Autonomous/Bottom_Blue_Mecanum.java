@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Autonomous;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import org.firstinspires.ftc.teamcode.Autonomous.Mecanum_Nav_Routines;
 import org.firstinspires.ftc.teamcode.GlobalVarriables;
 
 /**
@@ -30,9 +31,9 @@ public class Bottom_Blue_Mecanum extends Mecanum_Nav_Routines {
         go_sideways("blue", 90, 270, .27, 10, 16);
 
         if (vuforiareading[0] == "LEFT") {
-            go_sideways(null, 270, 270, .27, 1.5, 0);
+            go_sideways(null, 270, 270, .27, 2, 0);
         } else if (vuforiareading[0] == "RIGHT") {
-            go_sideways(null, 90, 270, .27, 1.7, 0);
+            go_sideways(null, 90, 270, .27, 2.2, 0);
         } else {
             go_sideways(null, 90, 270, .27, .2, 0);
         }
@@ -41,8 +42,8 @@ public class Bottom_Blue_Mecanum extends Mecanum_Nav_Routines {
         sleep(300);
         lift_glyph("down", 0, false);
         sleep(500);
-        leftclamp.setPosition(GlobalVarriables.leftclampopen);
-        rightclamp.setPosition(GlobalVarriables.rightclampopen);
+        leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
+        rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
         sleep(1000);
         go_forward(4, 270,-.2, true);
 
