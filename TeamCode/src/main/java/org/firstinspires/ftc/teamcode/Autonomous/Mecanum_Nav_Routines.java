@@ -2,9 +2,6 @@ package org.firstinspires.ftc.teamcode.Autonomous;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.Matrix;
-import android.os.Environment;
-import android.provider.Settings;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
@@ -30,10 +27,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.teamcode.DbgLog;
 import org.firstinspires.ftc.teamcode.GlobalVarriables;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
 /**
  * Created by Drew on 1/10/2018.
  */
@@ -45,14 +38,15 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
     DcMotor leftRear;
     DcMotor rightRear;
     DcMotor liftmotor;
+    DcMotor leftintake;
+    DcMotor rightintake;
     public Servo leftclamp;
     public Servo rightclamp;
     Servo leftjewelservo;
     Servo leftjewelservoflipper;
     Servo rightjewelservo;
     Servo rightjewelservoflipper;
-    Servo leftglyphwheel;
-    Servo rightglyphwheel;
+    Servo intakeposservo;
     ModernRoboticsI2cRangeSensor rangesensor;
     ColorSensor cs;
     BNO055IMU imu;
@@ -81,14 +75,15 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
         leftclamp = hardwareMap.servo.get("lc");
         rightclamp = hardwareMap.servo.get("rc");
         liftmotor = hardwareMap.dcMotor.get("lm");
+        leftintake = hardwareMap.dcMotor.get("li");
+        rightintake = hardwareMap.dcMotor.get("ri");
         leftjewelservo = hardwareMap.servo.get("ljs");
         leftjewelservoflipper = hardwareMap.servo.get("ljsf");
         rightjewelservo = hardwareMap.servo.get("rjs");
         rightjewelservoflipper = hardwareMap.servo.get("rjsf");
-        leftglyphwheel = hardwareMap.servo.get("lgw");
-        rightglyphwheel = hardwareMap.servo.get("rgw");
         rangesensor = hardwareMap.get(ModernRoboticsI2cRangeSensor.class, "rs");
         cs = hardwareMap.colorSensor.get("cs");
+        intakeposservo = hardwareMap.servo.get("ips");
 
         rightFront.setDirection(DcMotor.Direction.REVERSE);
         rightRear.setDirection(DcMotor.Direction.REVERSE);
@@ -151,7 +146,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
 
         timeouttimer.reset();
         prevheading = current_heading;
-        while (degrees_to_turn > .5 && opModeIsActive() && runtime.seconds() < 26 && timeouttimer.seconds() < 2) {
+        while (degrees_to_turn > .5 && opModeIsActive() && runtime.seconds() < GlobalVarriables.runtimelimit && timeouttimer.seconds() < 2) {
 
 //            wheel_power = (Math.pow((degrees_to_turn + 5) / 40, 2) + 2) / 100;
 
@@ -218,7 +213,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
 
         timeouttimer.reset();
         prevheading = current_heading;
-        while (degrees_to_turn > .5 && opModeIsActive() && runtime.seconds() < 26 && timeouttimer.seconds() < 2) {
+        while (degrees_to_turn > .5 && opModeIsActive() && runtime.seconds() < GlobalVarriables.runtimelimit && timeouttimer.seconds() < 2) {
 
             wheel_power = (2 * Math.pow((degrees_to_turn + 13) / 23, 2) + 10) / 100;
 
@@ -330,7 +325,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
 
         while (opModeIsActive() && !destination_reached && !runtimereached && timeouttimer.seconds() < 2) {
 
-            if (runtime.seconds() > 26 && !runtimeoveride) {
+            if (runtime.seconds() > GlobalVarriables.runtimelimit && !runtimeoveride) {
                 runtimereached = true;
             }
 
@@ -357,7 +352,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
 
             actual_speed = getSpeed(lowest_ticks_traveled);
 
-            if (actual_speed > 0.05) {  // if we're going less than this we aren't moving.
+            if (actual_speed > 0.1) {  // if we're going less than this we aren't moving.
                 timeouttimer.reset();
             }
 
@@ -518,7 +513,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
         while (Math.abs(walldistance - inchesreadfromwall) > .5 && timeouttimer.seconds() < 2 && !tooclose && opModeIsActive()) {
             inchesreadfromwall = rangesensorreading();
             poweradjustment = (Math.pow(Math.abs(inchesreadfromwall - walldistance) / 9, 3) + 15) / 100;
-            if (inchesreadfromwall - walldistance < 0){
+            if (inchesreadfromwall - walldistance < 0) {
                 poweradjustment = -poweradjustment;
             }
 
@@ -739,9 +734,9 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
             while (lifttargetpos > liftencoderpos + 40 && opModeIsActive()) {
                 liftencoderpos = liftmotor.getCurrentPosition() - liftencoderstartpos;
                 if (lifttargetpos - liftencoderpos > 120) {
-                    liftmotor.setPower(1);
+                    liftmotor.setPower(.7);
                 } else {
-                    liftmotor.setPower(.6);
+                    liftmotor.setPower(.5);
                 }
             }
         }
@@ -789,19 +784,84 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
         DbgLog.msg("10435 Ending Jewel Knock Vuforia");
     }
 
-    public void setwheelintake(boolean in, boolean on){
-        if (on) {
-            if (in) {
-                leftglyphwheel.setPosition(1);
-                rightglyphwheel.setPosition(0);
+    public String jewelknockvuforia2(String RoB, boolean useright) {
+        String[] vuforiareading = new String[2];
+        String rightjewelcolor = null;
+
+        if (useright) {
+            rightjewelservo.setPosition(.17);
+        } else {
+            leftjewelservo.setPosition(.83);
+        }
+        vuforiareading = vuforia_scan();
+        rightjewelcolor = vuforiareading[1];
+
+        DbgLog.msg("10435 Starting Jewel Knock Vuforia");
+        DbgLog.msg("10435 Right Jewel Color: " + rightjewelcolor);
+
+        if (RoB == "red" && rightjewelcolor == "blue" || RoB == "blue" && rightjewelcolor == "red") {
+            DbgLog.msg("10435 Jewel Knock Vuforia: Hitting Left");
+            if (useright) {
+                rightjewelservoflipper.setPosition(GlobalVarriables.rightjewelservoflipperinit - GlobalVarriables.jewelflipperswing);
             } else {
-                leftglyphwheel.setPosition(0);
-                rightglyphwheel.setPosition(1);
+                leftjewelservoflipper.setPosition(GlobalVarriables.leftjewelservoflipperinit - GlobalVarriables.jewelflipperswing);
+            }
+        } else if (RoB == "red" && rightjewelcolor == "red" || RoB == "blue" && rightjewelcolor == "blue") {
+            DbgLog.msg("10435 Jewel Knock Vuforia: Hitting Right");
+            if (useright) {
+                rightjewelservoflipper.setPosition(GlobalVarriables.rightjewelservoflipperinit + GlobalVarriables.jewelflipperswing);
+            } else {
+                leftjewelservoflipper.setPosition(GlobalVarriables.leftjewelservoflipperinit + GlobalVarriables.jewelflipperswing);
+            }
+        }
+
+        sleep(700);
+        rightjewelservo.setPosition(GlobalVarriables.rightjewelservoinit);
+        leftjewelservo.setPosition(GlobalVarriables.leftjewelservoinit);
+        rightjewelservoflipper.setPosition(GlobalVarriables.rightjewelservoflipperinit);
+        leftjewelservoflipper.setPosition(GlobalVarriables.leftjewelservoflipperinit);
+        sleep(200);
+
+        DbgLog.msg("10435 Ending Jewel Knock Vuforia");
+
+        return vuforiareading[0];
+    }
+
+    public void setwheelintake(boolean wheeldirectionin, boolean wheelon, boolean swingout) {
+        if (wheelon) {
+            if (wheeldirectionin) {
+                leftintake.setPower(-1);
+                rightintake.setPower(1);
+            } else {
+                leftintake.setPower(1);
+                rightintake.setPower(-1);
             }
         } else {
-            leftglyphwheel.setPosition(.5);
-            rightglyphwheel.setPosition(.5);
+            leftintake.setPower(0);
+            rightintake.setPower(0);
         }
+        if (swingout) {
+            intakeposservo.setPosition(0);
+        } else {
+            intakeposservo.setPosition(1);
+        }
+    }
+
+    public void wheeljiggle(){
+        rightFront.setPower(-.75);
+        rightRear.setPower(-.75);
+        leftFront.setPower(-.75);
+        leftRear.setPower(-.75);
+        sleep(200);
+        rightFront.setPower(.75);
+        rightRear.setPower(.75);
+        leftFront.setPower(.75);
+        leftRear.setPower(.75);
+        sleep(250);
+        rightFront.setPower(0);
+        rightRear.setPower(0);
+        leftFront.setPower(0);
+        leftRear.setPower(0);
     }
 
     private double getSpeed(double ticks_traveled) {
@@ -884,6 +944,5 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
 
         return inchesfound;
     }
-
 }
 

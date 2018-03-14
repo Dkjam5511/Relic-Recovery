@@ -18,6 +18,8 @@ public class MecanumTeleOp extends OpMode {
     DcMotor rightRear;
     DcMotor liftmotor;
     DcMotor relicmotor;
+    DcMotor leftintake;
+    DcMotor rightintake;
     Servo leftjewelservo;
     Servo leftjewelservoflipper;
     Servo rightjewelservo;
@@ -26,16 +28,15 @@ public class MecanumTeleOp extends OpMode {
     Servo relicjaw;
     Servo leftclamp;
     Servo rightclamp;
-    Servo leftglyphwheel;
-    Servo rightglyphwheel;
-    //Servo glyphspinner;
+    Servo intakeposservo;
 
     double liftencoderstartpos;
     double relicjawanglepos = 0;
     double relicmotorpower;
     double liftencoderpos;
     double liftheight;
-    double liftclearance = 3;
+    double firstliftheight = 3.5;
+    double liftclearance = 4;
     double blockheight = 6;
     double ticksperrev = 560;
     double inchesperrev = 5.375;
@@ -43,6 +44,7 @@ public class MecanumTeleOp extends OpMode {
     double lifttargetpos;
     double slowlifttargetpos;
     double speedmodifier = 1;
+    double relicjawpos;
 
     int liftlevel = 0;
     int rightclampsetting = 2; // 0 is closed 1 is open and 2 is init
@@ -58,9 +60,10 @@ public class MecanumTeleOp extends OpMode {
     boolean liftslowdown = false;
     boolean waitingforlefttriggerrelease;
     boolean waitingforrighttriggerrelease;
-    boolean glyphspinnerisleft = false;
     boolean glyphintake = true;
     boolean relicanglemanualmode = false;
+    boolean liftup = false;
+    boolean parkingintakewheels = false;
 
     ElapsedTime relicjawtimer = new ElapsedTime();
     ElapsedTime relicjawangletimer = new ElapsedTime();
@@ -69,7 +72,7 @@ public class MecanumTeleOp extends OpMode {
     ElapsedTime raiseliftimer = new ElapsedTime();
     ElapsedTime lowerliftimer = new ElapsedTime();
     ElapsedTime glyphintaketimer = new ElapsedTime();
-    ElapsedTime glyphspinnertimer = new ElapsedTime();
+    ElapsedTime wheelpowertimer = new ElapsedTime();
 
     @Override
     public void init() {
@@ -79,6 +82,8 @@ public class MecanumTeleOp extends OpMode {
         rightRear = hardwareMap.dcMotor.get("rr");
         liftmotor = hardwareMap.dcMotor.get("lm");
         relicmotor = hardwareMap.dcMotor.get("rm");
+        leftintake = hardwareMap.dcMotor.get("li");
+        rightintake = hardwareMap.dcMotor.get("ri");
         relicjaw = hardwareMap.servo.get("rj");
         relicjawangle = hardwareMap.servo.get("rja");
         leftclamp = hardwareMap.servo.get("lc");
@@ -87,9 +92,7 @@ public class MecanumTeleOp extends OpMode {
         leftjewelservoflipper = hardwareMap.servo.get("ljsf");
         rightjewelservo = hardwareMap.servo.get("rjs");
         rightjewelservoflipper = hardwareMap.servo.get("rjsf");
-        leftglyphwheel = hardwareMap.servo.get("lgw");
-        rightglyphwheel = hardwareMap.servo.get("rgw");
-        //glyphspinner = hardwareMap.servo.get("gs");
+        intakeposservo = hardwareMap.servo.get("ips");
 
         rightFront.setDirection(DcMotor.Direction.REVERSE);
         rightRear.setDirection(DcMotor.Direction.REVERSE);
@@ -104,13 +107,19 @@ public class MecanumTeleOp extends OpMode {
 
         relicmotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        leftintake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightintake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         rightjewelservo.setPosition(GlobalVarriables.rightjewelservoinit);
         leftjewelservo.setPosition(GlobalVarriables.leftjewelservoinit);
         rightjewelservoflipper.setPosition(GlobalVarriables.rightjewelservoflipperinit);
         leftjewelservoflipper.setPosition(GlobalVarriables.leftjewelservoflipperinit);
+        leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
+        rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
 
         relicjaw.setPosition(0);
         relicjawangle.setPosition(0);
+        intakeposservo.setPosition(1);
 
         liftencoderstartpos = liftmotor.getCurrentPosition();
     }
@@ -118,43 +127,58 @@ public class MecanumTeleOp extends OpMode {
     @Override
     public void loop() {
         //Glyph Wheels
-        if (gamepad1.left_trigger >= .75 && glyphintaketimer.seconds() > .25) {
+        if (gamepad1.right_trigger >= .75 || parkingintakewheels) {
             glyphintake = false;
-            glyphintaketimer.reset();
-        }
-
-        if (gamepad1.right_trigger >= .75 && glyphintaketimer.seconds() > .25) {
+        } else {
             glyphintake = true;
+        }
+
+        if (gamepad1.left_trigger >= .75 && glyphintaketimer.seconds() > .25) {
+            parkingintakewheels = !parkingintakewheels;
             glyphintaketimer.reset();
         }
 
-        if (leftclampsetting == clampclosed) {
-            leftglyphwheel.setPosition(.5);
-        } else {
-            if (liftlevel == 0) {
-                if (glyphintake) {
-                    leftglyphwheel.setPosition(1);
-                } else {
-                    leftglyphwheel.setPosition(0);
-                }
+        if (parkingintakewheels == false) {
+            wheelpowertimer.reset();
+            intakeposservo.setPosition(1);
+            if (leftclampsetting != clampopen) {
+                leftintake.setPower(0);
             } else {
-                leftglyphwheel.setPosition(.5);
+                if (liftlevel < 3) {
+                    if (glyphintake) {
+                        leftintake.setPower(-1);
+                    } else {
+                        leftintake.setPower(1);
+                    }
+                } else {
+                    leftintake.setPower(0);
+                }
+            }
+
+            if (rightclampsetting != clampopen) {
+                rightintake.setPower(0);
+            } else {
+                if (liftlevel < 3) {
+                    if (glyphintake) {
+                        rightintake.setPower(1);
+                    } else {
+                        rightintake.setPower(-1);
+                    }
+                } else {
+                    rightintake.setPower(0);
+                }
+            }
+        } else {
+            intakeposservo.setPosition(0);
+            if (wheelpowertimer.seconds() < 1.5) {
+                rightintake.setPower(-1);
+                leftintake.setPower(1);
+            } else {
+                rightintake.setPower(0);
+                leftintake.setPower(0);
             }
         }
 
-        if (rightclampsetting == clampclosed) {
-            rightglyphwheel.setPosition(.5);
-        } else {
-            if (liftlevel == 0) {
-                if (glyphintake) {
-                    rightglyphwheel.setPosition(0);
-                } else {
-                    rightglyphwheel.setPosition(1);
-                }
-            } else {
-                rightglyphwheel.setPosition(.5);
-            }
-        }
 
         //Driving
         double leftstickx = 0;
@@ -209,28 +233,6 @@ public class MecanumTeleOp extends OpMode {
         leftRear.setPower(leftrearpower);
         rightRear.setPower(rightrearpower);
 
-        telemetry.addData("r (radius or power)", wheelpower);
-        telemetry.addData("stickangleradians minus 45", stickangleradians);
-        telemetry.addData("radians", stickangleradians + Math.PI / 4);
-        telemetry.addData("degrees", (stickangleradians + Math.PI / 4) * 180 / Math.PI);
-
-        //Glyph Spinner
-        /*
-        if (gamepad1.right_trigger >= .75) {
-            if (glyphspinnertimer.seconds() >= 1.50) {
-                glyphspinnerisleft = !glyphspinnerisleft;
-                glyphspinnertimer.reset();
-                if (glyphspinnerisleft) {
-                    glyphspinner.setPosition(.8);
-                } else {
-                    glyphspinner.setPosition(.25);
-                }
-            }
-        } else {
-            glyphspinner.setPosition(.5);
-        }
-*/
-
         //Relic Arm
         relicmotorpower = gamepad2.left_stick_y;
         relicmotor.setPower(relicmotorpower);
@@ -241,12 +243,12 @@ public class MecanumTeleOp extends OpMode {
         }
 
         if (!relicjawshut) {
-            relicjaw.setPosition(.5);
+            relicjaw.setPosition(relicjawpos);
         } else {
             relicjaw.setPosition(0);
         }
 
-        if (gamepad2.start && relicanglemanualmodetimer.seconds() > .25){
+        if (gamepad2.start && relicanglemanualmodetimer.seconds() > .25) {
             relicanglemanualmode = !relicanglemanualmode;
             relicanglemanualmodetimer.reset();
         }
@@ -263,41 +265,35 @@ public class MecanumTeleOp extends OpMode {
             if (gamepad2.dpad_up) {
                 relicjawangle.setPosition(1);
                 relicjawanglepos = 1;
+                relicjawpos = .5;
             }
             if (gamepad2.y) {
-                relicjawangle.setPosition(.45);
-                relicjawanglepos = .45;
+                relicjawangle.setPosition(.5);
+                relicjawanglepos = .5;
+                relicjawpos = .35;
             }
             if (gamepad2.x) {
-                relicjawangle.setPosition(.4);
-                relicjawanglepos = .4;
+                relicjawangle.setPosition(.45);
+                relicjawanglepos = .45;
+                relicjawpos = .5;
             }
             if (gamepad2.a) {
                 relicjawangle.setPosition(.35);
                 relicjawanglepos = .35;
+                relicjawpos = .7;
             }
             if (gamepad1.y) {
                 relicjawangle.setPosition(0);
                 relicjawanglepos = 0;
+                relicjawpos = .7;
             }
         }
         // Lift
-        /*
-        if (gamepad2.dpad_up) {
-            liftlevel = 2;
-            rightclampsetting = clampopen;
-        }
-        */
         if (gamepad2.dpad_right) {
             liftlevel = 0;
             rightclampsetting = clampopen;
         }
-/*
-        if (gamepad2.dpad_left) {
-            liftlevel = 2;
-            leftclampsetting = clampopen;
-        }
-        */
+
         if (gamepad2.dpad_down) {
             liftlevel = 0;
             leftclampsetting = clampopen;
@@ -319,7 +315,7 @@ public class MecanumTeleOp extends OpMode {
                 raiseliftimer.reset();
                 liftlevel -= 1;
             }
-            if (gamepad2.right_stick_y <= -.9 && lowerliftimer.seconds() > .25 && liftlevel < 5) {
+            if (gamepad2.right_stick_y <= -.9 && lowerliftimer.seconds() > .25 && liftlevel < 6) {
                 lowerliftimer.reset();
                 liftlevel += 1;
             }
@@ -341,7 +337,7 @@ public class MecanumTeleOp extends OpMode {
 
             } else if (lifttargetpos > liftencoderpos + liftvariance) {
                 if (liftslowdown) {
-                    liftmotor.setPower(.3);
+                    liftmotor.setPower(.6);
                 } else if (lifttargetpos - liftencoderpos > 120) {
                     liftmotor.setPower(1);
                 } else {
@@ -355,12 +351,15 @@ public class MecanumTeleOp extends OpMode {
         }
         //Glyph Grabbers
         if (gamepad2.left_trigger > .75 && leftclampsetting != clampclosed) {
+            if (liftlevel == 1) {
+                liftlevel = 0;
+            }
             leftclampsetting = clampclosed;
             waitingforlefttriggerrelease = true;
         }
         if (waitingforlefttriggerrelease && gamepad2.left_trigger < .1) {
-            if (liftlevel < 5) {
-                liftlevel += 1;
+            if (liftlevel < 6) {
+                liftup = true;
                 slowlifttargetpos = calculatelifttargetpos(liftlevel);
                 liftslowdown = true;
             }
@@ -369,17 +368,26 @@ public class MecanumTeleOp extends OpMode {
         }
 
         if (gamepad2.right_trigger > .75 && rightclampsetting != clampclosed) {
+            if (liftlevel == 1) {
+                liftlevel = 0;
+            }
             rightclampsetting = clampclosed;
             waitingforrighttriggerrelease = true;
         }
         if (waitingforrighttriggerrelease && gamepad2.right_trigger < .1) {
-            if (liftlevel < 5) {
-                liftlevel += 1;
+            if (liftlevel < 6) {
+                liftup = true;
                 slowlifttargetpos = calculatelifttargetpos(liftlevel);
                 liftslowdown = true;
             }
-
             waitingforrighttriggerrelease = false;
+        }
+
+        if (liftup) {
+            if (liftlevel == 0) {
+                liftlevel = 1;
+            }
+            liftup = false;
         }
 
         if (gamepad2.left_bumper && leftclampsetting != clampinit) {
@@ -411,9 +419,9 @@ public class MecanumTeleOp extends OpMode {
         if (liftlevel == 0) {
             liftheight = 0;
         } else if (liftlevel == 1) {
-            liftheight = liftclearance;
+            liftheight = firstliftheight;
         } else if (liftlevel == 2) {
-            liftheight = blockheight;
+            liftheight = blockheight + 1;
         } else {
             liftheight = liftclearance + ((liftlevel - 2) * blockheight);
         }

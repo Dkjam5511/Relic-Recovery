@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.GlobalVarriables;
 /**
  * Created by Drew on 2/1/2018.
  */
-@Autonomous(name = "Bottom Blue Mecanum", group = "Autonomous")
+@Autonomous(name = "Bottom Blue", group = "Autonomous")
 public class Bottom_Blue_Mecanum extends Mecanum_Nav_Routines {
 
     String[] vuforiareading = new String[2];
@@ -17,7 +17,7 @@ public class Bottom_Blue_Mecanum extends Mecanum_Nav_Routines {
     public void runOpMode() throws InterruptedException {
         MNav_Init();
         runtime.reset();
-        lift_glyph("up", 5.5, true);
+        lift_glyph("up", 7, true);
         vuforiareading = vuforia_scan();
         jewelknockvuforia("blue", vuforiareading[1], false);
 
@@ -26,14 +26,14 @@ public class Bottom_Blue_Mecanum extends Mecanum_Nav_Routines {
         lift_glyph("up", 15, false);
         go_sideways(null, 270, 270, .27, 2, 0);
         go_forward(2,270,.2, false);
-        wall_distance_align(16);
+        wall_distance_align(16.5);
         sleep(500);
-        go_sideways("blue", 90, 270, .27, 10, 16);
+        go_sideways("blue", 90, 270, .27, 10, 16.5);
 
         if (vuforiareading[0] == "LEFT") {
             go_sideways(null, 270, 270, .27, 2, 0);
         } else if (vuforiareading[0] == "RIGHT") {
-            go_sideways(null, 90, 270, .27, 2.2, 0);
+            go_sideways(null, 90, 270, .27, 2, 0);
         } else {
             go_sideways(null, 90, 270, .27, .2, 0);
         }
@@ -42,8 +42,8 @@ public class Bottom_Blue_Mecanum extends Mecanum_Nav_Routines {
         sleep(300);
         lift_glyph("down", 0, false);
         sleep(500);
-        leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
-        rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
+        leftclamp.setPosition(GlobalVarriables.leftclampinitpos);
+        rightclamp.setPosition(GlobalVarriables.rightclampinitpos);
         sleep(1000);
         go_forward(4, 270,-.2, true);
 
