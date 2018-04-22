@@ -2,8 +2,7 @@ package org.firstinspires.ftc.teamcode.Autonomous.Old_Autonomous;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
-import org.firstinspires.ftc.teamcode.Autonomous.Old_Autonomous.Nav_Routines;
-import org.firstinspires.ftc.teamcode.GlobalVarriables;
+import org.firstinspires.ftc.teamcode.GlobalVariables;
 
 /**
  * Created by Drew on 10/25/2017.
@@ -18,7 +17,7 @@ public class Bottom_Red extends Nav_Routines {
         NAV_init();
         runtime.reset();
         lift_glyph("up");
-        vuforiareading = vuforia_scan();
+        vuforiareading = vuforia_scan10435();
         jewelknockvuforia("red", vuforiareading[1], true);
 
         if (vuforiareading[0] == "LEFT") {
@@ -28,8 +27,8 @@ public class Bottom_Red extends Nav_Routines {
             sleep(300);
             lift_glyph("down");
             sleep(500);
-            leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
-            rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
+            leftclamp.setPosition(GlobalVariables.leftclampopenpos);
+            rightclamp.setPosition(GlobalVariables.rightclampopenpos);
             sleep(1000);
             go_forward(2, 50, -.2, true);
         } else if (vuforiareading[0] == "RIGHT") {
@@ -39,8 +38,8 @@ public class Bottom_Red extends Nav_Routines {
             sleep(300);
             lift_glyph("down");
             sleep(500);
-            leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
-            rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
+            leftclamp.setPosition(GlobalVariables.leftclampopenpos);
+            rightclamp.setPosition(GlobalVariables.rightclampopenpos);
             sleep(1000);
             go_forward(2, 65, -.2, true);
         } else {  //center
@@ -50,8 +49,8 @@ public class Bottom_Red extends Nav_Routines {
             sleep(300);
             lift_glyph("down");
             sleep(500);
-            leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
-            rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
+            leftclamp.setPosition(GlobalVariables.leftclampopenpos);
+            rightclamp.setPosition(GlobalVariables.rightclampopenpos);
             sleep(1000);
             go_forward(2, 52, -.2, true);
         }

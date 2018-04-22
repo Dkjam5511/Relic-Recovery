@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.Autonomous;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import org.firstinspires.ftc.teamcode.GlobalVarriables;
+import org.firstinspires.ftc.teamcode.GlobalVariables;
 
 /**
  * Created by Drew on 1/21/2018.
@@ -17,15 +17,15 @@ public class Top_Blue_Mecanum extends Mecanum_Nav_Routines {
         MNav_Init();
         runtime.reset();
         setwheelintake(false, true, true);
-        leftclamp.setPosition(GlobalVarriables.leftclampdeploypos);
-        rightclamp.setPosition(GlobalVarriables.rightclampdeploypos);
+        leftclamp.setPosition(GlobalVariables.leftclampinitpos);
+        rightclamp.setPosition(GlobalVariables.rightclampinitpos);
         sleep(500);
-        rightclamp.setPosition(GlobalVarriables.rightclampclosedpos);  // Close the right clamp on the glyph
-        leftclamp.setPosition(GlobalVarriables.leftclampopenpos);      // put the left clamp back to init so that intake arm drops
+        rightclamp.setPosition(GlobalVariables.rightclampclosedpos);  // Close the right clamp on the glyph
+        leftclamp.setPosition(GlobalVariables.leftclampopenpos);      // put the left clamp back to init so that intake arm drops
         vuforiareading[0] = jewelknockvuforia2("blue", false);
         setwheelintake(false, false, true);
         lift_glyph("up", 7, false);
-        leftclamp.setPosition(GlobalVarriables.leftclampinitpos);
+        leftclamp.setPosition(GlobalVariables.leftclampinitpos);
 
         go_forward(24, 0, .12, false);
         lift_glyph("up", 15, false);
@@ -45,8 +45,8 @@ public class Top_Blue_Mecanum extends Mecanum_Nav_Routines {
         sleep(300);
         lift_glyph("down", 0, false);
         sleep(500);
-        leftclamp.setPosition(GlobalVarriables.leftclampinitpos);
-        rightclamp.setPosition(GlobalVarriables.rightclampinitpos);
+        leftclamp.setPosition(GlobalVariables.leftclampinitpos);
+        rightclamp.setPosition(GlobalVariables.rightclampinitpos);
         sleep(1000);
         go_forward(4, 0, -.2, true);
     }

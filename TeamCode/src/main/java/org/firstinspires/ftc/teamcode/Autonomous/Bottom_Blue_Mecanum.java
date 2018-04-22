@@ -2,8 +2,7 @@ package org.firstinspires.ftc.teamcode.Autonomous;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import org.firstinspires.ftc.teamcode.Autonomous.Mecanum_Nav_Routines;
-import org.firstinspires.ftc.teamcode.GlobalVarriables;
+import org.firstinspires.ftc.teamcode.GlobalVariables;
 
 /**
  * Created by Drew on 2/1/2018.
@@ -18,7 +17,7 @@ public class Bottom_Blue_Mecanum extends Mecanum_Nav_Routines {
         MNav_Init();
         runtime.reset();
         lift_glyph("up", 7, true);
-        vuforiareading = vuforia_scan();
+        vuforiareading = vuforia_scan10435();
         jewelknockvuforia("blue", vuforiareading[1], false);
 
         go_forward(26, 0, .12, false);
@@ -42,8 +41,8 @@ public class Bottom_Blue_Mecanum extends Mecanum_Nav_Routines {
         sleep(300);
         lift_glyph("down", 0, false);
         sleep(500);
-        leftclamp.setPosition(GlobalVarriables.leftclampinitpos);
-        rightclamp.setPosition(GlobalVarriables.rightclampinitpos);
+        leftclamp.setPosition(GlobalVariables.leftclampinitpos);
+        rightclamp.setPosition(GlobalVariables.rightclampinitpos);
         sleep(1000);
         go_forward(4, 270,-.2, true);
 

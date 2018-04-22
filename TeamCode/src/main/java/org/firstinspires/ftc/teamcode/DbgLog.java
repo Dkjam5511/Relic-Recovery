@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 package org.firstinspires.ftc.teamcode;
 
+
 /**
  * Provide utility methods for debug logging
  */
@@ -49,7 +50,9 @@ public class DbgLog {
      * @param message
      */
     public static void msg(String message) {
-        android.util.Log.i(TAG, message);
+        if(GlobalVariables.logging_10435){
+            android.util.Log.i(TAG, message);
+        }
     }
 
     public static void msg(String format, Object... args) {

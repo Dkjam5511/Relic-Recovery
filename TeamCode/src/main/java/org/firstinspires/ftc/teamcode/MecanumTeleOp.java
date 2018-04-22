@@ -110,12 +110,12 @@ public class MecanumTeleOp extends OpMode {
         leftintake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightintake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        rightjewelservo.setPosition(GlobalVarriables.rightjewelservoinit);
-        leftjewelservo.setPosition(GlobalVarriables.leftjewelservoinit);
-        rightjewelservoflipper.setPosition(GlobalVarriables.rightjewelservoflipperinit);
-        leftjewelservoflipper.setPosition(GlobalVarriables.leftjewelservoflipperinit);
-        leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
-        rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
+        rightjewelservo.setPosition(GlobalVariables.rightjewelservoinit);
+        leftjewelservo.setPosition(GlobalVariables.leftjewelservoinit);
+        rightjewelservoflipper.setPosition(GlobalVariables.rightjewelservoflipperinit);
+        leftjewelservoflipper.setPosition(GlobalVariables.leftjewelservoflipperinit);
+        leftclamp.setPosition(GlobalVariables.leftclampopenpos);
+        rightclamp.setPosition(GlobalVariables.rightclampopenpos);
 
         relicjaw.setPosition(0);
         relicjawangle.setPosition(0);
@@ -248,7 +248,7 @@ public class MecanumTeleOp extends OpMode {
             relicjaw.setPosition(0);
         }
 
-        if (gamepad2.start && relicanglemanualmodetimer.seconds() > .25) {
+        if (gamepad2.back && relicanglemanualmodetimer.seconds() > .25) {
             relicanglemanualmode = !relicanglemanualmode;
             relicanglemanualmodetimer.reset();
         }
@@ -268,18 +268,18 @@ public class MecanumTeleOp extends OpMode {
                 relicjawpos = .5;
             }
             if (gamepad2.y) {
-                relicjawangle.setPosition(.5);
-                relicjawanglepos = .5;
+                relicjawangle.setPosition(.45);
+                relicjawanglepos = .45;
                 relicjawpos = .35;
             }
             if (gamepad2.x) {
-                relicjawangle.setPosition(.45);
-                relicjawanglepos = .45;
-                relicjawpos = .5;
+                relicjawangle.setPosition(.40);
+                relicjawanglepos = .40;
+                relicjawpos = .45;
             }
             if (gamepad2.a) {
-                relicjawangle.setPosition(.35);
-                relicjawanglepos = .35;
+                relicjawangle.setPosition(.30);
+                relicjawanglepos = .30;
                 relicjawpos = .7;
             }
             if (gamepad1.y) {
@@ -399,19 +399,19 @@ public class MecanumTeleOp extends OpMode {
         }
 
         if (leftclampsetting == clampinit) {
-            leftclamp.setPosition(GlobalVarriables.leftclampinitpos);
+            leftclamp.setPosition(GlobalVariables.leftclampinitpos);
         } else if (leftclampsetting == clampopen) {
-            leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
+            leftclamp.setPosition(GlobalVariables.leftclampopenpos);
         } else if (leftclampsetting == clampclosed) {
-            leftclamp.setPosition(GlobalVarriables.leftclampclosedpos);
+            leftclamp.setPosition(GlobalVariables.leftclampclosedpos);
         }
 
         if (rightclampsetting == clampinit) {
-            rightclamp.setPosition(GlobalVarriables.rightclampinitpos);
+            rightclamp.setPosition(GlobalVariables.rightclampinitpos);
         } else if (rightclampsetting == clampopen) {
-            rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
+            rightclamp.setPosition(GlobalVariables.rightclampopenpos);
         } else if (rightclampsetting == clampclosed) {
-            rightclamp.setPosition(GlobalVarriables.rightclampclosedpos);
+            rightclamp.setPosition(GlobalVariables.rightclampclosedpos);
         }
     }
 

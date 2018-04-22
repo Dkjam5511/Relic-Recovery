@@ -25,7 +25,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.teamcode.DbgLog;
-import org.firstinspires.ftc.teamcode.GlobalVarriables;
+import org.firstinspires.ftc.teamcode.GlobalVariables;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -79,8 +79,8 @@ public abstract class Nav_Routines extends LinearOpMode {
         jewelservo.setPosition(.6);
         sidejewelservo.setPosition(.2);
 
-        leftclamp.setPosition(GlobalVarriables.leftclampinitpos);
-        rightclamp.setPosition(GlobalVarriables.rightclampinitpos);
+        leftclamp.setPosition(GlobalVariables.leftclampinitpos);
+        rightclamp.setPosition(GlobalVariables.rightclampinitpos);
 
         rightWheel.setDirection(DcMotorSimple.Direction.FORWARD);
         leftWheel.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -364,7 +364,7 @@ public abstract class Nav_Routines extends LinearOpMode {
 
     } // end of go_forward
 
-    public String[] vuforia_scan() {
+    public String[] vuforia_scan10435() {
 
         DbgLog.msg("10435 Starting Vuforia_Scan");
 
@@ -678,8 +678,8 @@ public abstract class Nav_Routines extends LinearOpMode {
         sleep(200);
 
         if (UoD == "up") {
-            leftclamp.setPosition(GlobalVarriables.leftclampclosedpos);
-            rightclamp.setPosition(GlobalVarriables.rightclampclosedpos);
+            leftclamp.setPosition(GlobalVariables.leftclampclosedpos);
+            rightclamp.setPosition(GlobalVariables.rightclampclosedpos);
             sleep(2000);
             lifttargetpos = incheslifted * ticksperinchlift;
         } else if (UoD == "down") {

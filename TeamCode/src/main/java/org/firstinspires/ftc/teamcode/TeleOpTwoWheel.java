@@ -1,13 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.provider.Settings;
-
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -110,8 +106,8 @@ public class TeleOpTwoWheel extends OpMode {
 
         //Initializing Positions
 
-        rightclamp.setPosition(GlobalVarriables.rightclampinitpos);
-        leftclamp.setPosition(GlobalVarriables.leftclampinitpos);
+        rightclamp.setPosition(GlobalVariables.rightclampinitpos);
+        leftclamp.setPosition(GlobalVariables.leftclampinitpos);
 
         jewelservo.setPosition(.6);
         sidejewelservo.setPosition(.2);
@@ -289,19 +285,19 @@ public class TeleOpTwoWheel extends OpMode {
         }
 
         if (leftclampsetting == 2) {
-            leftclamp.setPosition(GlobalVarriables.leftclampinitpos);
+            leftclamp.setPosition(GlobalVariables.leftclampinitpos);
         } else if (leftclampsetting == 1) {
-            leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
+            leftclamp.setPosition(GlobalVariables.leftclampopenpos);
         } else if (leftclampsetting == 0){
-            leftclamp.setPosition(GlobalVarriables.leftclampclosedpos);
+            leftclamp.setPosition(GlobalVariables.leftclampclosedpos);
         }
 
         if (rightclampsetting == 2) {
-            rightclamp.setPosition(GlobalVarriables.rightclampinitpos);
+            rightclamp.setPosition(GlobalVariables.rightclampinitpos);
         } else if (rightclampsetting == 1) {
-            rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
+            rightclamp.setPosition(GlobalVariables.rightclampopenpos);
         } else if (rightclampsetting == 0){
-            rightclamp.setPosition(GlobalVarriables.rightclampclosedpos);
+            rightclamp.setPosition(GlobalVariables.rightclampclosedpos);
         }
 
 

@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.Autonomous;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import org.firstinspires.ftc.teamcode.GlobalVarriables;
+import org.firstinspires.ftc.teamcode.GlobalVariables;
 
 /**
  * Created by Drew on 1/21/2018.
@@ -16,16 +16,16 @@ public class Bottom_Blue_3Glyph_Mecanum extends Mecanum_Nav_Routines {
     public void runOpMode() throws InterruptedException {
         MNav_Init();
         runtime.reset();
-        leftclamp.setPosition(GlobalVarriables.leftclampdeploypos);
-        rightclamp.setPosition(GlobalVarriables.rightclampdeploypos);
+        leftclamp.setPosition(GlobalVariables.leftclampinitpos);
+        rightclamp.setPosition(GlobalVariables.rightclampinitpos);
         sleep(500);
         setwheelintake(false, true, true);
-        rightclamp.setPosition(GlobalVarriables.rightclampclosedpos);  // Close the right clamp on the glyph
-        leftclamp.setPosition(GlobalVarriables.leftclampopenpos);      // put the left clamp back to init so that intake arm drops
+        rightclamp.setPosition(GlobalVariables.rightclampclosedpos);  // Close the right clamp on the glyph
+        leftclamp.setPosition(GlobalVariables.leftclampopenpos);      // put the left clamp back to init so that intake arm drops
         vuforiareading[0] = jewelknockvuforia2("blue", false);
         setwheelintake(false, false, true);
         lift_glyph("up", 7, false);
-        leftclamp.setPosition(GlobalVarriables.leftclampinitpos);
+        leftclamp.setPosition(GlobalVariables.leftclampinitpos);
         go_forward(20, 0, .35, false);
         turn_to_heading(270);
         go_forward(3, 270, .3, false);
@@ -42,8 +42,8 @@ public class Bottom_Blue_3Glyph_Mecanum extends Mecanum_Nav_Routines {
 
         lift_glyph("down", 3, false);
         go_forward(7.5, 270, .4, false);
-        leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
-        rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
+        leftclamp.setPosition(GlobalVariables.leftclampopenpos);
+        rightclamp.setPosition(GlobalVariables.rightclampopenpos);
         sleep(400);
 
         if (vuforiareading[0] == "RIGHT") {
@@ -61,14 +61,14 @@ public class Bottom_Blue_3Glyph_Mecanum extends Mecanum_Nav_Routines {
             go_sideways(null, 270, 90, .7, .75, 0);
         }
         go_forward(9, 90, 1, false);
-        leftclamp.setPosition(GlobalVarriables.leftclampclosedpos);
-        rightclamp.setPosition(GlobalVarriables.rightclampclosedpos);
+        leftclamp.setPosition(GlobalVariables.leftclampclosedpos);
+        rightclamp.setPosition(GlobalVariables.rightclampclosedpos);
         go_forward(9, 90, -1, false);
-        leftclamp.setPosition(GlobalVarriables.leftclampopenpos);
-        rightclamp.setPosition(GlobalVarriables.rightclampopenpos);
+        leftclamp.setPosition(GlobalVariables.leftclampopenpos);
+        rightclamp.setPosition(GlobalVariables.rightclampopenpos);
         go_forward(9, 90, .25, false);
-        leftclamp.setPosition(GlobalVarriables.leftclampclosedpos);
-        rightclamp.setPosition(GlobalVarriables.rightclampclosedpos);
+        leftclamp.setPosition(GlobalVariables.leftclampclosedpos);
+        rightclamp.setPosition(GlobalVariables.rightclampclosedpos);
         sleep(800);
         wheeljiggle();
         setwheelintake(false, false,true);
@@ -83,15 +83,15 @@ public class Bottom_Blue_3Glyph_Mecanum extends Mecanum_Nav_Routines {
         go_forward(10.5, 270, .5, false);
 
         if (vuforiareading[0] == "CENTER") {
-            rightclamp.setPosition(GlobalVarriables.rightclampinitpos);
+            rightclamp.setPosition(GlobalVariables.rightclampinitpos);
             sleep(400);
             go_forward(4, 270, -.4, false);
             lift_glyph("down", 3, false);
             go_forward(4, 270, .4, false);
         } else{
-            rightclamp.setPosition(GlobalVarriables.rightclampinitpos);
+            rightclamp.setPosition(GlobalVariables.rightclampinitpos);
         }
-        leftclamp.setPosition(GlobalVarriables.leftclampinitpos);
+        leftclamp.setPosition(GlobalVariables.leftclampinitpos);
         sleep(400);
         go_forward(5, 270, -.2, true);
         lift_glyph("down", 0, false);

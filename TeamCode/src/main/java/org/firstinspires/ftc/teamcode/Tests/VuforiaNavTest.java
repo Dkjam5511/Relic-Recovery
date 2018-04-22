@@ -12,6 +12,6 @@ public class VuforiaNavTest extends Nav_Routines {
     @Override
     public void runOpMode() throws InterruptedException {
         NAV_init();
-        vuforia_scan();
+        vuforia_scan10435();
     }
 }
