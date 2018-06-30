@@ -11,6 +11,7 @@ import org.firstinspires.ftc.teamcode.GlobalVariables;
 public class Top_Red_3Glyph_Mecanum extends Mecanum_Nav_Routines {
 
     String[] vuforiareading = new String[2];
+    int degrees_away_from_platform = 25;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -67,26 +68,26 @@ public class Top_Red_3Glyph_Mecanum extends Mecanum_Nav_Routines {
 
         // turn on the wheel intake and turn around
         setwheelintake(true, true, false);
-        turn_to_heading(215);
+        turn_to_heading(180 + degrees_away_from_platform);
 
         leftclamp.setPosition(GlobalVariables.leftclampopenpos);
         rightclamp.setPosition(GlobalVariables.rightclampopenpos);
 
         // go to pile and grab
         goforwardstopdetect = .5;
-        go_forward(23, 210, 1, false);
+        go_forward(24, 180 + degrees_away_from_platform, .7, false);
         wheelwaggle(160, false);
-        go_forward(3, 210, 1, false);
+        go_forward(3.5, 180 + degrees_away_from_platform, 1, false);
         leftclamp.setPosition(GlobalVariables.leftclampclosedpos);
         rightclamp.setPosition(GlobalVariables.rightclampclosedpos);
         sleep(200);
-        go_forward(9, 215, -1, false);
+        go_forward(9, 180 + degrees_away_from_platform, -1, false);
         leftclamp.setPosition(GlobalVariables.leftclampopenpos);
         rightclamp.setPosition(GlobalVariables.rightclampopenpos);
-        go_forward(10.5, 210, .25, false);
+        go_forward(10.5, 180 + degrees_away_from_platform, .25, false);
         leftclamp.setPosition(GlobalVariables.leftclampclosedpos);
         rightclamp.setPosition(GlobalVariables.rightclampclosedpos);
-        sleep(400);
+        sleep(300);
         wheeljiggle();
         //leftclamp.setPosition(GlobalVariables.leftclampopenpos);
         //rightclamp.setPosition(GlobalVariables.rightclampopenpos);
@@ -106,10 +107,11 @@ public class Top_Red_3Glyph_Mecanum extends Mecanum_Nav_Routines {
         // find the red line
         go_sideways("red", 90, 0, .6, 3, 0);
 
+        // move to the correct cryptobox column
         if (vuforiareading[0] == "RIGHT") {
             go_sideways(null, 270, 0, .5, .38, 0);
         } else if (vuforiareading[0] == "LEFT") {
-            go_sideways(null, 90, 0, .5, .455, 0);
+            go_sideways(null, 90, 0, .5, .42, 0);
         } else {
             go_sideways(null, 270, 0, .5, .38, 0);
         }

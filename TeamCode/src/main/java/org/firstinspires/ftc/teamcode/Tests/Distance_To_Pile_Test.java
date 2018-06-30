@@ -13,8 +13,8 @@ public class Distance_To_Pile_Test extends Mecanum_Nav_Routines {
     public void runOpMode() throws InterruptedException {
         MNav_Init();
         runtime.reset();
-        distancetopile = go_forward(15,0,.3,false);
-        telemetry.addData("Distance To Pile: ", distancetopile);
+        go_forward(15,0,.3,false);
+        telemetry.addData("Distance To Pile: won't work because go_forward was changed", distancetopile);
         telemetry.update();
         sleep(5000);
     }

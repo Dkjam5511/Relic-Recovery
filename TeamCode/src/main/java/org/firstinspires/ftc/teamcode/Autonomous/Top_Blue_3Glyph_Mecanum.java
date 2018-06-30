@@ -11,6 +11,7 @@ import org.firstinspires.ftc.teamcode.GlobalVariables;
 public class Top_Blue_3Glyph_Mecanum extends Mecanum_Nav_Routines {
 
     String[] vuforiareading = new String[2];
+    int degrees_away_from_platform = 25;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -30,7 +31,7 @@ public class Top_Blue_3Glyph_Mecanum extends Mecanum_Nav_Routines {
         lift_glyph("up", 7, false);
 
         // Go off the platform
-        go_forward(22, 0, .3, false);
+        go_forward(21, 0, .3, false);
         setwheelintake(false, false, true);
         sleep(100);
 
@@ -41,9 +42,9 @@ public class Top_Blue_3Glyph_Mecanum extends Mecanum_Nav_Routines {
         if (vuforiareading[0] == "LEFT") {
             go_sideways(null, 270, 0, .5, .825, 0);
         } else if (vuforiareading[0] == "RIGHT") {
-            go_sideways(null, 90, 0, .5, .37, 0);
+            go_sideways(null, 90, 0, .5, .4, 0);
         } else {
-            go_sideways(null, 270, 0, .5, .4, 0);
+            go_sideways(null, 270, 0, .5, .3, 0);
         }
 
         //  Place first glyph in cryptobox
@@ -67,24 +68,23 @@ public class Top_Blue_3Glyph_Mecanum extends Mecanum_Nav_Routines {
 
         // turn on the wheel intake and turn around
         setwheelintake(true, true, false);
-        turn_to_heading(155);
+        turn_to_heading(180 - degrees_away_from_platform);
 
         // go to pile and grab
         goforwardstopdetect = .5;
-        go_forward(23, 150, 1, false);
+        go_forward(22, 180 - degrees_away_from_platform, .7, false);
         wheelwaggle(160, true);
-        go_forward(5, 150, 1, false);
+        go_forward(3.5, 180 - degrees_away_from_platform, 1, false);
         leftclamp.setPosition(GlobalVariables.leftclampclosedpos);
         rightclamp.setPosition(GlobalVariables.rightclampclosedpos);
         sleep(200);
-        go_forward(9, 145, -1, false);
+        go_forward(9, 180 - degrees_away_from_platform, -1, false);
         leftclamp.setPosition(GlobalVariables.leftclampopenpos);
         rightclamp.setPosition(GlobalVariables.rightclampopenpos);
-        go_forward(13.5, 150, .25, false);
-        goforwardstopdetect = 2;
+        go_forward(10.5, 180 - degrees_away_from_platform, .25, false);
         leftclamp.setPosition(GlobalVariables.leftclampclosedpos);
         rightclamp.setPosition(GlobalVariables.rightclampclosedpos);
-        sleep(400);
+        sleep(300);
         wheeljiggle();
         setwheelintake(false, true, true);
         lift_glyph("up", 16, false);
@@ -94,7 +94,7 @@ public class Top_Blue_3Glyph_Mecanum extends Mecanum_Nav_Routines {
         go_forward(15, 170, -.6, false);
 
         // get straight with cryptobox
-        turn_to_heading(260);
+        //turn_to_heading(260);
         turn_to_heading(0);
         setwheelintake(false, true, true);
         wall_distance_align(19);
@@ -108,7 +108,7 @@ public class Top_Blue_3Glyph_Mecanum extends Mecanum_Nav_Routines {
         } else if (vuforiareading[0] == "RIGHT") {
             go_sideways(null, 270, 0, .5, .455, 0);
         } else {
-            go_sideways(null, 90, 0, .5, .3, 0);
+            go_sideways(null, 90, 0, .5, .33, 0);
         }
 /*
         // go sideways to correct column

@@ -6,10 +6,10 @@ package org.firstinspires.ftc.teamcode;
 
 public class GlobalVariables {
     // Glyph Clamps
-    public static final double rightclampopenpos = .5;
+    public static final double rightclampopenpos = .465;
     public static final double rightclampclosedpos = 0;
     public static final double rightclampinitpos = 1;
-    public static final double leftclampopenpos = .5;
+    public static final double leftclampopenpos = .495;
     public static final double leftclampclosedpos = 1;
     public static final double leftclampinitpos = 0;
 
@@ -18,7 +18,7 @@ public class GlobalVariables {
     public static final double rightjewelservoflipperinit = .53;
     public static final double leftjewelservoflipperinit = .47;
     public static final double rightjewelservoinit = .9;
-    public static final double leftjewelservoinit = .1;
+    public static final double leftjewelservoinit = .6;
 
     public static final double runtimelimit = 27;
 

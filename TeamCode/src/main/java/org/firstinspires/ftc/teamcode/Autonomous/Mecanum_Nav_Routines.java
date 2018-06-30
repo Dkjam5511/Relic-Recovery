@@ -15,12 +15,15 @@ import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.Vuforia;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.RelicRecoveryVuMark;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
@@ -51,6 +54,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
     ColorSensor cs;
     BNO055IMU imu;
     Orientation angles;
+    Acceleration gravity;
     VuforiaLocalizer vuforia;
 
     public String picturereading = null;
@@ -114,6 +118,8 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
         leftjewelservoflipper.setPosition(GlobalVariables.leftjewelservoflipperinit);
 
         angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+        gravity = imu.getGravity();
 
         liftencoderstartpos = liftmotor.getCurrentPosition();
 
@@ -279,7 +285,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
 
     } // end of turn_to_heading_pirouette
 
-    public double go_forward(double inches_to_travel, int heading, double speed, boolean runtimeoveride) {
+    public void go_forward(double inches_to_travel, int heading, double speed, boolean runtimeoveride) {
 
         DbgLog.msg("10435 starting GO_FORWARD inches:" + Double.toString(inches_to_travel) + " heading:" + Integer.toString(heading) + " speed:" + Double.toString(speed));
 
@@ -290,7 +296,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
         boolean destination_reached = false;
         boolean going_backwards = false;
         boolean runtimereached = false;
-        boolean tractiondetect_disabled = false;
+        boolean collisiondetected = false;
         double speed_increase = .05;
         double actual_speed;
         double lagreduction = 2.125;
@@ -312,6 +318,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
         double remaining_inches;
         double previous_log_timer = 0;
         double power_adjustment;
+
 
         ElapsedTime timeouttimer = new ElapsedTime();
 
@@ -336,7 +343,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
 
         gs_first_run = true;
 
-        while (opModeIsActive() && !destination_reached && !runtimereached && timeouttimer.seconds() < goforwardstopdetect && (tractiondetect_disabled || (highest_ticks_traveled - lowest_ticks_traveled < 500))) {
+        while (opModeIsActive() && !destination_reached && !runtimereached && timeouttimer.seconds() < goforwardstopdetect) {
 
             if (runtime.seconds() > GlobalVariables.runtimelimit && !runtimeoveride) {
                 runtimereached = true;
@@ -348,10 +355,6 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
             }
 
             power_adjustment = go_straight_adjustment(heading);
-
-            if (Math.abs(power_adjustment) > .1) {
-                tractiondetect_disabled = true;  // disable the comparison of ticks traveled if robot is turning significantly
-            }
 
             rightFront.setPower(current_speed + power_adjustment);
             rightRear.setPower(current_speed + power_adjustment);
@@ -378,10 +381,6 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
             if (actual_speed > 0.1) {  // if we're going less than this we aren't moving.
                 timeouttimer.reset();
             }
-
-            telemetry.addData("GO_FORWARD ticks_to_travel", ticks_to_travel);
-            telemetry.addData("actual speed:", actual_speed);
-            telemetry.update();
 
             if (lowest_ticks_traveled_l != previous_ticks_traveled_L && log_timer.seconds() - previous_log_timer > .1) {
                 DbgLog.msg("10435 GO_FORWARD ticks_traveled: L:" + Double.toString(lowest_ticks_traveled_l)
@@ -419,8 +418,6 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
                 + " timouttimer:" + Double.toString(timeouttimer.seconds())
                 + " lowest ticks traveled:" + Integer.toString(lowest_ticks_traveled)
                 + " highest ticks traveled:" + Integer.toString(highest_ticks_traveled));
-
-        return lowest_ticks_traveled / ticks_per_inch;
 
     } // end of go_forward
 
@@ -549,7 +546,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
 
         while (Math.abs(walldistance - inchesreadfromwall) > .5 && timeouttimer.seconds() < 2 && !tooclose && opModeIsActive()) {
             inchesreadfromwall = rangesensorreading();
-            poweradjustment = (Math.pow(Math.abs(inchesreadfromwall - walldistance) / 9, 3) + 15) / 100;
+            poweradjustment = (Math.pow(Math.abs(inchesreadfromwall - walldistance + 5)/ 7, 3) + 15) / 100;
             if (inchesreadfromwall - walldistance < 0) {
                 poweradjustment = -poweradjustment;
             }
@@ -827,7 +824,7 @@ abstract public class Mecanum_Nav_Routines extends LinearOpMode {
         if (useright) {
             rightjewelservo.setPosition(.17);
         } else {
-            leftjewelservo.setPosition(.83);
+            leftjewelservo.setPosition(0);
         }
         vuforiareading = vuforia_scan10435();
         rightjewelcolor = vuforiareading[1];

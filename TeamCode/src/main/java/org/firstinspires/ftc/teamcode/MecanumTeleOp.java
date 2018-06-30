@@ -45,6 +45,8 @@ public class MecanumTeleOp extends OpMode {
     double slowlifttargetpos;
     double speedmodifier = 1;
     double relicjawpos;
+    double intakeposservo_closed = .94;
+    double intakeposservo_open = 0;
 
     int liftlevel = 0;
     int rightclampsetting = 2; // 0 is closed 1 is open and 2 is init
@@ -119,7 +121,7 @@ public class MecanumTeleOp extends OpMode {
 
         relicjaw.setPosition(0);
         relicjawangle.setPosition(0);
-        intakeposservo.setPosition(1);
+        intakeposservo.setPosition(intakeposservo_closed);
 
         liftencoderstartpos = liftmotor.getCurrentPosition();
     }
@@ -140,7 +142,7 @@ public class MecanumTeleOp extends OpMode {
 
         if (parkingintakewheels == false) {
             wheelpowertimer.reset();
-            intakeposservo.setPosition(1);
+            intakeposservo.setPosition(intakeposservo_closed);
             if (leftclampsetting != clampopen) {
                 leftintake.setPower(0);
             } else {
@@ -169,7 +171,7 @@ public class MecanumTeleOp extends OpMode {
                 }
             }
         } else {
-            intakeposservo.setPosition(0);
+            intakeposservo.setPosition(intakeposservo_open);
             if (wheelpowertimer.seconds() < 1.5) {
                 rightintake.setPower(-1);
                 leftintake.setPower(1);
